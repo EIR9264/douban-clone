@@ -1,0 +1,29 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: douban-movie
+  datasource:
+    url: jdbc:mysql://localhost:3306/douban?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
+    username: root
+    password: 1234
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  sql:
+    init:
+      mode: never
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.douban.entity
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+jwt:
+  secret: douban-movie-secret-key-2024-very-long-and-secure-string-for-jwt-signing
+  expiration: 604800000  # 7 days in milliseconds
+
+logging:
+  level:
+    com.douban: DEBUG

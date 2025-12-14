@@ -1,0 +1,10 @@
+# 默认行为：自动处理行尾
+* text=auto
+
+# 强制这些脚本文件必须保留 LF (这对 mvnw 很重要)
+*.sh text eol=lf
+mvnw text eol=lf
+
+# Windows 批处理文件强制 CRLF
+*.cmd text eol=crlf
+*.bat text eol=crlf

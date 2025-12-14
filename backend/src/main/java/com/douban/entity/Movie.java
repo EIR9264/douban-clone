@@ -1,0 +1,26 @@
+package com.douban.entity;
+
+import lombok.Data;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Data
+public class Movie {
+    private Long id;
+    private String title;
+    private String originalTitle;
+    private Integer year;
+    private String directors;
+    private String actors;
+    private String genres;
+    private String country;
+    private String language;
+    private Integer duration;
+    private BigDecimal rating;
+    private Integer ratingCount;
+    private String summary;
+    private String poster;
+    private String images;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+}

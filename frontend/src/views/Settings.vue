@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import api from '@/api'
 
@@ -8,169 +9,215 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const user = computed(() => userStore.user)
-const username = ref('')
-const bio = ref('')
-const currentPassword = ref('')
-const newPassword = ref('')
-const confirmPassword = ref('')
+const formRef = ref()
 const loading = ref(false)
-const message = ref('')
-const messageType = ref('success')
+
+const form = ref({
+  username: '',
+  bio: ''
+})
+
+const rules = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 2, message: '用户名至少2个字符', trigger: 'blur' }
+  ]
+}
 
 onMounted(() => {
   if (user.value) {
-    username.value = user.value.username || ''
-    bio.value = user.value.bio || ''
+    form.value.username = user.value.username || ''
+    form.value.bio = user.value.bio || ''
   }
 })
 
 async function updateProfile() {
-  loading.value = true
-  message.value = ''
-  try {
-    const updated = await api.updateUser({
-      username: username.value,
-      bio: bio.value
-    })
-    userStore.user = updated
-    message.value = '个人信息更新成功'
-    messageType.value = 'success'
-  } catch (e) {
-    message.value = e.message
-    messageType.value = 'error'
-  } finally {
-    loading.value = false
-  }
+  if (!formRef.value) return
+
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
+
+    loading.value = true
+    try {
+      const updated = await api.updateUser({
+        username: form.value.username,
+        bio: form.value.bio
+      })
+      userStore.user = updated
+      ElMessage.success('个人信息更新成功')
+    } catch (e) {
+      ElMessage.error(e.message)
+    } finally {
+      loading.value = false
+    }
+  })
 }
 
-function logout() {
-  userStore.logout()
-  router.push('/')
+async function logout() {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    userStore.logout()
+    ElMessage.success('已退出登录')
+    router.push('/')
+  } catch {
+    // 取消操作
+  }
 }
 </script>
 
 <template>
   <div class="settings-page">
     <div class="container">
-      <h1 class="page-title">账号设置</h1>
+      <h1 class="page-title">
+        <el-icon><Setting /></el-icon>
+        账号设置
+      </h1>
 
-      <div class="settings-card">
-        <h2 class="card-title">个人信息</h2>
-
-        <div class="form-group">
-          <label class="form-label">头像</label>
-          <div class="avatar-section">
-            <img :src="user?.avatar" alt="" class="current-avatar" />
-            <p class="avatar-hint">暂不支持修改头像</p>
+      <el-card class="settings-card" shadow="never">
+        <template #header>
+          <div class="card-header">
+            <el-icon><User /></el-icon>
+            个人信息
           </div>
-        </div>
+        </template>
 
-        <div class="form-group">
-          <label class="form-label">用户名</label>
-          <input
-            v-model="username"
-            type="text"
-            class="input"
-            placeholder="请输入用户名"
-          />
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">邮箱</label>
-          <input
-            :value="user?.email"
-            type="email"
-            class="input"
-            disabled
-          />
-          <span class="field-hint">邮箱不可修改</span>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">个人简介</label>
-          <textarea
-            v-model="bio"
-            class="input"
-            rows="3"
-            placeholder="介绍一下自己..."
-          ></textarea>
-        </div>
-
-        <div class="message" :class="messageType" v-if="message">
-          {{ message }}
-        </div>
-
-        <button
-          class="btn btn-primary"
-          @click="updateProfile"
-          :disabled="loading"
+        <el-form
+          ref="formRef"
+          :model="form"
+          :rules="rules"
+          label-position="top"
         >
-          {{ loading ? '保存中...' : '保存修改' }}
-        </button>
-      </div>
+          <el-form-item label="头像">
+            <div class="avatar-section">
+              <el-avatar :size="80" :src="user?.avatar">
+                <el-icon :size="32"><User /></el-icon>
+              </el-avatar>
+              <span class="avatar-hint">暂不支持修改头像</span>
+            </div>
+          </el-form-item>
 
-      <div class="settings-card danger-zone">
-        <h2 class="card-title">账号操作</h2>
-        <p class="danger-text">退出当前账号</p>
-        <button class="btn btn-danger" @click="logout">
+          <el-form-item label="用户名" prop="username">
+            <el-input
+              v-model="form.username"
+              placeholder="请输入用户名"
+              size="large"
+              :prefix-icon="User"
+            />
+          </el-form-item>
+
+          <el-form-item label="邮箱">
+            <el-input
+              :model-value="user?.email"
+              size="large"
+              disabled
+              :prefix-icon="Message"
+            />
+            <div class="field-hint">
+              <el-icon><Lock /></el-icon>
+              邮箱不可修改
+            </div>
+          </el-form-item>
+
+          <el-form-item label="个人简介">
+            <el-input
+              v-model="form.bio"
+              type="textarea"
+              :rows="3"
+              placeholder="介绍一下自己..."
+            />
+          </el-form-item>
+
+          <el-form-item>
+            <el-button
+              type="primary"
+              size="large"
+              :loading="loading"
+              @click="updateProfile"
+            >
+              {{ loading ? '保存中...' : '保存修改' }}
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+
+      <el-card class="settings-card danger-zone" shadow="never">
+        <template #header>
+          <div class="card-header danger">
+            <el-icon><Warning /></el-icon>
+            账号操作
+          </div>
+        </template>
+
+        <p class="danger-text">退出当前账号后，需要重新登录才能使用完整功能</p>
+        <el-button type="danger" size="large" @click="logout">
+          <el-icon><SwitchButton /></el-icon>
           退出登录
-        </button>
-      </div>
+        </el-button>
+      </el-card>
     </div>
   </div>
 </template>
 
+<script>
+import { User, Message, Lock } from '@element-plus/icons-vue'
+export default {
+  data() {
+    return { User, Message, Lock }
+  }
+}
+</script>
+
 <style scoped>
 .settings-page {
-  padding: 20px 0;
+  padding: 24px 0;
+}
+
+.settings-page > .container {
   max-width: 600px;
-  margin: 0 auto;
 }
 
 .page-title {
   font-size: 28px;
   font-weight: 600;
   margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title .el-icon {
+  color: var(--douban-green);
 }
 
 .settings-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: 24px;
   margin-bottom: 24px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 16px;
 }
 
-.card-title {
-  font-size: 18px;
+.settings-card:hover {
+  transform: none;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
   font-weight: 600;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border-color);
 }
 
-.form-group {
-  margin-bottom: 20px;
-}
-
-.form-label {
-  display: block;
-  font-size: 14px;
-  font-weight: 500;
-  margin-bottom: 8px;
+.card-header.danger {
+  color: #dc2626;
 }
 
 .avatar-section {
   display: flex;
   align-items: center;
   gap: 16px;
-}
-
-.current-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  object-fit: cover;
 }
 
 .avatar-hint {
@@ -182,40 +229,13 @@ function logout() {
   font-size: 12px;
   color: var(--text-muted);
   margin-top: 4px;
-}
-
-.input:disabled {
-  background: var(--bg-tertiary);
-  cursor: not-allowed;
-}
-
-textarea.input {
-  resize: none;
-}
-
-.message {
-  padding: 12px;
-  border-radius: var(--radius-md);
-  margin-bottom: 16px;
-  font-size: 14px;
-}
-
-.message.success {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-.message.error {
-  background: #fef2f2;
-  color: #dc2626;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .danger-zone {
   border: 1px solid #fecaca;
-}
-
-.danger-zone .card-title {
-  color: #dc2626;
 }
 
 .danger-text {
@@ -224,12 +244,11 @@ textarea.input {
   font-size: 14px;
 }
 
-.btn-danger {
-  background: #dc2626;
-  color: white;
+:deep(.el-form-item__label) {
+  font-weight: 500;
 }
 
-.btn-danger:hover {
-  background: #b91c1c;
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
 }
 </style>

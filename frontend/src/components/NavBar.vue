@@ -7,7 +7,6 @@ const router = useRouter()
 const userStore = useUserStore()
 
 const searchQuery = ref('')
-const showUserMenu = ref(false)
 
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const user = computed(() => userStore.user)
@@ -19,10 +18,15 @@ function handleSearch() {
   }
 }
 
-function logout() {
-  userStore.logout()
-  showUserMenu.value = false
-  router.push('/')
+function handleCommand(command) {
+  if (command === 'profile') {
+    router.push('/profile')
+  } else if (command === 'settings') {
+    router.push('/settings')
+  } else if (command === 'logout') {
+    userStore.logout()
+    router.push('/')
+  }
 }
 </script>
 
@@ -30,63 +34,84 @@ function logout() {
   <header class="navbar">
     <div class="navbar-container container">
       <router-link to="/" class="logo">
-        <span class="logo-icon">🎬</span>
+        <el-icon :size="28" color="#00b386"><Film /></el-icon>
         <span class="logo-text">豆瓣电影</span>
       </router-link>
 
-      <nav class="nav-links hide-mobile">
-        <router-link to="/" class="nav-link">首页</router-link>
-        <router-link to="/movies" class="nav-link">电影</router-link>
-      </nav>
+      <el-menu
+        mode="horizontal"
+        :ellipsis="false"
+        router
+        class="nav-menu hide-mobile"
+      >
+        <el-menu-item index="/">首页</el-menu-item>
+        <el-menu-item index="/movies">电影</el-menu-item>
+      </el-menu>
 
       <div class="search-box">
-        <input
+        <el-input
           v-model="searchQuery"
-          type="text"
           placeholder="搜索电影..."
-          class="search-input"
+          :prefix-icon="Search"
+          clearable
           @keyup.enter="handleSearch"
         />
-        <button class="search-btn" @click="handleSearch">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="11" cy="11" r="8"/>
-            <path d="m21 21-4.35-4.35"/>
-          </svg>
-        </button>
       </div>
 
       <div class="nav-right">
         <template v-if="isLoggedIn">
-          <div class="user-menu" @click="showUserMenu = !showUserMenu">
-            <img :src="user?.avatar" alt="" class="user-avatar" />
-            <span class="user-name hide-mobile">{{ user?.username }}</span>
-            <div v-if="showUserMenu" class="user-dropdown">
-              <router-link to="/profile" class="dropdown-item" @click="showUserMenu = false">
-                我的主页
-              </router-link>
-              <router-link to="/settings" class="dropdown-item" @click="showUserMenu = false">
-                账号设置
-              </router-link>
-              <div class="dropdown-divider"></div>
-              <button class="dropdown-item" @click="logout">退出登录</button>
+          <el-dropdown trigger="click" @command="handleCommand">
+            <div class="user-trigger">
+              <el-avatar :size="32" :src="user?.avatar">
+                <el-icon><User /></el-icon>
+              </el-avatar>
+              <span class="user-name hide-mobile">{{ user?.username }}</span>
+              <el-icon class="hide-mobile"><ArrowDown /></el-icon>
             </div>
-          </div>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="profile">
+                  <el-icon><User /></el-icon>
+                  我的主页
+                </el-dropdown-item>
+                <el-dropdown-item command="settings">
+                  <el-icon><Setting /></el-icon>
+                  账号设置
+                </el-dropdown-item>
+                <el-dropdown-item divided command="logout">
+                  <el-icon><SwitchButton /></el-icon>
+                  退出登录
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
         </template>
         <template v-else>
-          <router-link to="/login" class="btn btn-outline btn-sm">登录</router-link>
+          <el-button type="primary" round @click="router.push('/login')">
+            登录
+          </el-button>
         </template>
       </div>
     </div>
   </header>
 </template>
 
+<script>
+import { Search } from '@element-plus/icons-vue'
+export default {
+  data() {
+    return { Search }
+  }
+}
+</script>
+
 <style scoped>
 .navbar {
   position: sticky;
   top: 0;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid #f0f0f0;
   z-index: 100;
 }
 
@@ -95,6 +120,7 @@ function logout() {
   align-items: center;
   gap: 24px;
   height: 64px;
+  padding: 0 20px;
 }
 
 .logo {
@@ -103,66 +129,58 @@ function logout() {
   gap: 8px;
   font-weight: 600;
   font-size: 18px;
-}
-
-.logo-icon {
-  font-size: 24px;
-}
-
-.nav-links {
-  display: flex;
-  gap: 8px;
-}
-
-.nav-link {
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  color: var(--text-secondary);
-  transition: all var(--transition-fast);
-}
-
-.nav-link:hover {
   color: var(--text-primary);
-  background: var(--bg-secondary);
 }
 
-.nav-link.router-link-active {
-  color: var(--primary);
-  background: var(--primary-light);
+.logo-text {
+  background: linear-gradient(135deg, #00b386, #00a67d);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.nav-menu {
+  border: none !important;
+  background: transparent !important;
+  height: auto !important;
+  display: flex;
+  align-items: center;
+}
+
+.nav-menu :deep(.el-menu-item) {
+  font-size: 15px;
+  border-bottom: none !important;
+  padding: 0 20px;
+  height: 40px;
+  line-height: 40px;
+  border-radius: 20px;
+  margin: 0 4px;
+}
+
+.nav-menu :deep(.el-menu-item:hover) {
+  background-color: #f5f5f5 !important;
+}
+
+.nav-menu :deep(.el-menu-item.is-active) {
+  color: var(--douban-green) !important;
+  background-color: var(--el-color-primary-light-9) !important;
 }
 
 .search-box {
   flex: 1;
   max-width: 400px;
-  position: relative;
 }
 
-.search-input {
-  width: 100%;
-  padding: 10px 44px 10px 16px;
-  background: var(--bg-secondary);
-  border-radius: 24px;
-  font-size: 14px;
-  transition: all var(--transition-fast);
+.search-box :deep(.el-input__wrapper) {
+  border-radius: 20px;
+  background-color: #f5f5f5;
+  box-shadow: none !important;
 }
 
-.search-input:focus {
-  background: white;
-  box-shadow: var(--shadow-md);
-}
-
-.search-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  padding: 6px;
-  color: var(--text-muted);
-  transition: color var(--transition-fast);
-}
-
-.search-btn:hover {
-  color: var(--primary);
+.search-box :deep(.el-input__wrapper:hover),
+.search-box :deep(.el-input__wrapper:focus-within) {
+  background-color: white;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 .nav-right {
@@ -171,74 +189,24 @@ function logout() {
   gap: 12px;
 }
 
-.user-menu {
-  position: relative;
+.user-trigger {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 4px 12px 4px 4px;
   border-radius: 24px;
   cursor: pointer;
-  transition: background var(--transition-fast);
+  transition: background 0.2s;
 }
 
-.user-menu:hover {
-  background: var(--bg-secondary);
-}
-
-.user-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
+.user-trigger:hover {
+  background: #f5f5f5;
 }
 
 .user-name {
   font-size: 14px;
   font-weight: 500;
-}
-
-.user-dropdown {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 150px;
-  background: white;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  animation: dropdown-in 0.2s ease-out;
-}
-
-@keyframes dropdown-in {
-  from {
-    opacity: 0;
-    transform: translateY(-8px);
-  }
-}
-
-.dropdown-item {
-  display: block;
-  width: 100%;
-  padding: 12px 16px;
-  text-align: left;
-  font-size: 14px;
   color: var(--text-primary);
-  transition: background var(--transition-fast);
-}
-
-.dropdown-item:hover {
-  background: var(--bg-secondary);
-}
-
-.dropdown-divider {
-  height: 1px;
-  background: var(--border-color);
-}
-
-.btn-sm {
-  padding: 8px 16px;
-  font-size: 14px;
 }
 
 @media (max-width: 768px) {

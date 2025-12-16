@@ -1,8 +1,8 @@
 <script setup>
 import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import api from '@/api'
 import MovieCard from '@/components/MovieCard.vue'
-import Skeleton from '@/components/Skeleton.vue'
 
 const topRated = ref([])
 const recent = ref([])
@@ -14,6 +14,7 @@ onMounted(async () => {
     topRated.value = res.topRated || []
     recent.value = res.recent || []
   } catch (e) {
+    ElMessage.error('加载推荐失败')
     console.error('加载推荐失败:', e)
   } finally {
     loading.value = false
@@ -35,8 +36,14 @@ onMounted(async () => {
     <section class="section">
       <div class="container">
         <div class="section-header">
-          <h2 class="section-title">高分电影</h2>
-          <router-link to="/movies" class="view-all">查看更多 →</router-link>
+          <h2 class="section-title">
+            <el-icon><Star /></el-icon>
+            高分电影
+          </h2>
+          <router-link to="/movies" class="view-all">
+            查看更多
+            <el-icon><ArrowRight /></el-icon>
+          </router-link>
         </div>
 
         <div class="movie-grid" v-if="!loading">
@@ -47,11 +54,15 @@ onMounted(async () => {
           />
         </div>
         <div class="movie-grid" v-else>
-          <div v-for="i in 5" :key="i" class="skeleton-card">
-            <Skeleton height="200px" border-radius="12px" />
-            <Skeleton width="80%" height="16px" style="margin-top: 12px" />
-            <Skeleton width="50%" height="14px" style="margin-top: 8px" />
-          </div>
+          <el-card v-for="i in 5" :key="i" class="skeleton-card" shadow="never">
+            <el-skeleton animated>
+              <template #template>
+                <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px" />
+                <el-skeleton-item variant="h3" style="width: 80%; margin-top: 12px" />
+                <el-skeleton-item variant="text" style="width: 50%; margin-top: 8px" />
+              </template>
+            </el-skeleton>
+          </el-card>
         </div>
       </div>
     </section>
@@ -60,8 +71,14 @@ onMounted(async () => {
     <section class="section">
       <div class="container">
         <div class="section-header">
-          <h2 class="section-title">最新上映</h2>
-          <router-link to="/movies" class="view-all">查看更多 →</router-link>
+          <h2 class="section-title">
+            <el-icon><Film /></el-icon>
+            最新上映
+          </h2>
+          <router-link to="/movies" class="view-all">
+            查看更多
+            <el-icon><ArrowRight /></el-icon>
+          </router-link>
         </div>
 
         <div class="movie-grid" v-if="!loading">
@@ -72,11 +89,15 @@ onMounted(async () => {
           />
         </div>
         <div class="movie-grid" v-else>
-          <div v-for="i in 5" :key="i" class="skeleton-card">
-            <Skeleton height="200px" border-radius="12px" />
-            <Skeleton width="80%" height="16px" style="margin-top: 12px" />
-            <Skeleton width="50%" height="14px" style="margin-top: 8px" />
-          </div>
+          <el-card v-for="i in 5" :key="i" class="skeleton-card" shadow="never">
+            <el-skeleton animated>
+              <template #template>
+                <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px" />
+                <el-skeleton-item variant="h3" style="width: 80%; margin-top: 12px" />
+                <el-skeleton-item variant="text" style="width: 50%; margin-top: 8px" />
+              </template>
+            </el-skeleton>
+          </el-card>
         </div>
       </div>
     </section>
@@ -85,7 +106,7 @@ onMounted(async () => {
 
 <style scoped>
 .hero {
-  background: linear-gradient(135deg, #00b51d 0%, #009a18 100%);
+  background: linear-gradient(135deg, #00b386 0%, #009970 100%);
   color: white;
   padding: 60px 0;
   margin-bottom: 32px;
@@ -129,12 +150,22 @@ onMounted(async () => {
 .section-title {
   font-size: 22px;
   font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title .el-icon {
+  color: var(--douban-orange);
 }
 
 .view-all {
   font-size: 14px;
-  color: var(--primary);
-  transition: opacity var(--transition-fast);
+  color: var(--douban-green);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: opacity 0.2s;
 }
 
 .view-all:hover {
@@ -148,9 +179,11 @@ onMounted(async () => {
 }
 
 .skeleton-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: 12px;
+  border-radius: 12px;
+}
+
+.skeleton-card:hover {
+  transform: none;
 }
 
 @media (max-width: 768px) {

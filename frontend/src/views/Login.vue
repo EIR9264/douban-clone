@@ -1,81 +1,121 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-const username = ref('')
-const password = ref('')
+const formRef = ref()
 const loading = ref(false)
-const error = ref('')
+
+const form = reactive({
+  username: '',
+  password: ''
+})
+
+const rules = {
+  username: [
+    { required: true, message: '请输入用户名或邮箱', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' }
+  ]
+}
 
 async function handleLogin() {
-  if (!username.value || !password.value) {
-    error.value = '请填写用户名和密码'
-    return
-  }
+  if (!formRef.value) return
 
-  loading.value = true
-  error.value = ''
+  await formRef.value.validate(async (valid) => {
+    if (!valid) return
 
-  try {
-    await userStore.login(username.value, password.value)
-    const redirect = route.query.redirect || '/'
-    router.push(redirect)
-  } catch (e) {
-    error.value = e.message
-  } finally {
-    loading.value = false
-  }
+    loading.value = true
+    try {
+      await userStore.login(form.username, form.password)
+      ElMessage.success('登录成功')
+      const redirect = route.query.redirect || '/'
+      router.push(redirect)
+    } catch (e) {
+      ElMessage.error(e.message)
+    } finally {
+      loading.value = false
+    }
+  })
 }
 </script>
 
 <template>
   <div class="auth-page">
-    <div class="auth-card">
-      <h1 class="auth-title">登录</h1>
-      <p class="auth-subtitle">欢迎回来，继续探索好电影</p>
+    <el-card class="auth-card" shadow="always">
+      <div class="auth-header">
+        <el-icon :size="48" color="#00b386"><Film /></el-icon>
+        <h1 class="auth-title">登录</h1>
+        <p class="auth-subtitle">欢迎回来，继续探索好电影</p>
+      </div>
 
-      <form @submit.prevent="handleLogin" class="auth-form">
-        <div class="form-group">
-          <label class="form-label">用户名 / 邮箱</label>
-          <input
-            v-model="username"
-            type="text"
-            class="input"
+      <el-form
+        ref="formRef"
+        :model="form"
+        :rules="rules"
+        label-position="top"
+        @submit.prevent="handleLogin"
+      >
+        <el-form-item label="用户名 / 邮箱" prop="username">
+          <el-input
+            v-model="form.username"
             placeholder="请输入用户名或邮箱"
-            autocomplete="username"
+            size="large"
+            :prefix-icon="User"
           />
-        </div>
+        </el-form-item>
 
-        <div class="form-group">
-          <label class="form-label">密码</label>
-          <input
-            v-model="password"
+        <el-form-item label="密码" prop="password">
+          <el-input
+            v-model="form.password"
             type="password"
-            class="input"
             placeholder="请输入密码"
-            autocomplete="current-password"
+            size="large"
+            show-password
+            :prefix-icon="Lock"
           />
-        </div>
+        </el-form-item>
 
-        <div class="error-message" v-if="error">{{ error }}</div>
+        <el-form-item>
+          <el-button
+            type="primary"
+            size="large"
+            :loading="loading"
+            @click="handleLogin"
+            class="submit-btn"
+          >
+            {{ loading ? '登录中...' : '登录' }}
+          </el-button>
+        </el-form-item>
+      </el-form>
 
-        <button type="submit" class="btn btn-primary btn-block" :disabled="loading">
-          {{ loading ? '登录中...' : '登录' }}
-        </button>
-      </form>
+      <el-divider>
+        <span class="divider-text">还没有账号?</span>
+      </el-divider>
 
-      <p class="auth-footer">
-        还没有账号？
-        <router-link to="/register" class="auth-link">立即注册</router-link>
-      </p>
-    </div>
+      <div class="auth-footer">
+        <el-button size="large" @click="router.push('/register')" class="register-btn">
+          立即注册
+        </el-button>
+      </div>
+    </el-card>
   </div>
 </template>
+
+<script>
+import { User, Lock } from '@element-plus/icons-vue'
+export default {
+  data() {
+    return { User, Lock }
+  }
+}
+</script>
 
 <style scoped>
 .auth-page {
@@ -84,16 +124,18 @@ async function handleLogin() {
   align-items: center;
   justify-content: center;
   padding: 40px 20px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
 }
 
 .auth-card {
   width: 100%;
-  max-width: 400px;
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: 40px;
-  box-shadow: var(--shadow-lg);
+  max-width: 420px;
+  border-radius: 16px;
   animation: card-in 0.4s ease-out;
+}
+
+.auth-card :deep(.el-card__body) {
+  padding: 40px;
 }
 
 @keyframes card-in {
@@ -103,64 +145,45 @@ async function handleLogin() {
   }
 }
 
-.auth-title {
-  font-size: 28px;
-  font-weight: 700;
+.auth-header {
   text-align: center;
-  margin-bottom: 8px;
-}
-
-.auth-subtitle {
-  text-align: center;
-  color: var(--text-muted);
   margin-bottom: 32px;
 }
 
-.auth-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.auth-title {
+  font-size: 28px;
+  font-weight: 700;
+  margin: 16px 0 8px;
+  color: var(--text-primary);
 }
 
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.form-label {
+.auth-subtitle {
+  color: var(--text-muted);
   font-size: 14px;
-  font-weight: 500;
 }
 
-.error-message {
-  padding: 12px;
-  background: #fef2f2;
-  color: #dc2626;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  text-align: center;
-}
-
-.btn-block {
+.submit-btn {
   width: 100%;
-  padding: 14px;
-  font-size: 16px;
+}
+
+.divider-text {
+  color: var(--text-muted);
+  font-size: 13px;
 }
 
 .auth-footer {
   text-align: center;
-  margin-top: 24px;
-  font-size: 14px;
-  color: var(--text-muted);
 }
 
-.auth-link {
-  color: var(--primary);
+.register-btn {
+  width: 100%;
+}
+
+:deep(.el-form-item__label) {
   font-weight: 500;
 }
 
-.auth-link:hover {
-  text-decoration: underline;
+:deep(.el-input__wrapper) {
+  border-radius: 8px;
 }
 </style>

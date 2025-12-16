@@ -1,24 +1,24 @@
-/* ===== 变量定义 ===== */
+/* ===== Element Plus 主题覆盖 ===== */
 :root {
-  --primary: #00b51d;
-  --primary-light: #e8f5e9;
-  --secondary: #ff9800;
-  --text-primary: #1a1a1a;
-  --text-secondary: #666;
-  --text-muted: #999;
-  --bg-primary: #fff;
-  --bg-secondary: #f8f9fa;
-  --bg-tertiary: #f0f0f0;
-  --border-color: #e8e8e8;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 30px rgba(0,0,0,0.12);
-  --radius-sm: 8px;
-  --radius-md: 12px;
-  --radius-lg: 16px;
-  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --el-color-primary: #00b386;
+  --el-color-primary-light-3: #4dd4ac;
+  --el-color-primary-light-5: #80e0c3;
+  --el-color-primary-light-7: #b3ecda;
+  --el-color-primary-light-8: #ccf3e7;
+  --el-color-primary-light-9: #e6f9f3;
+  --el-color-primary-dark-2: #009970;
+
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 4px;
+  --el-border-radius-round: 20px;
+
+  /* 自定义变量 */
+  --douban-green: #00b386;
+  --douban-orange: #ff9500;
+  --text-primary: #303133;
+  --text-secondary: #606266;
+  --text-muted: #909399;
+  --bg-page: #f5f5f5;
 }
 
 /* ===== 重置与基础 ===== */
@@ -37,7 +37,7 @@ html {
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   color: var(--text-primary);
-  background: var(--bg-secondary);
+  background: var(--bg-page);
   line-height: 1.6;
   min-height: 100vh;
 }
@@ -53,19 +53,6 @@ img {
   display: block;
 }
 
-button {
-  font: inherit;
-  cursor: pointer;
-  border: none;
-  background: none;
-}
-
-input, textarea {
-  font: inherit;
-  border: none;
-  outline: none;
-}
-
 ul, ol {
   list-style: none;
 }
@@ -77,152 +64,115 @@ ul, ol {
   padding: 0 20px;
 }
 
-.flex {
-  display: flex;
+/* ===== Element Plus 组件覆盖 ===== */
+
+/* 评分星星颜色 */
+.el-rate {
+  --el-rate-fill-color: var(--douban-orange) !important;
+  --el-rate-void-color: #c6d1de !important;
 }
 
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.el-rate__icon {
+  font-size: inherit !important;
 }
 
-.flex-between {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+/* 卡片悬浮效果 */
+.el-card {
+  --el-card-border-radius: 12px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: none;
 }
 
-.grid {
-  display: grid;
+.el-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
 }
 
-/* ===== iOS风格按钮 ===== */
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 20px;
-  border-radius: var(--radius-md);
-  font-weight: 500;
-  transition: all var(--transition-fast);
-  user-select: none;
-  -webkit-tap-highlight-color: transparent;
+/* 按钮样式优化 */
+.el-button--primary {
+  --el-button-bg-color: var(--douban-green);
+  --el-button-border-color: var(--douban-green);
+  --el-button-hover-bg-color: #00c794;
+  --el-button-hover-border-color: #00c794;
+  --el-button-active-bg-color: #009970;
+  --el-button-active-border-color: #009970;
 }
 
-.btn:active {
-  transform: scale(0.96);
+/* 输入框聚焦效果 */
+.el-input__wrapper:focus-within {
+  box-shadow: 0 0 0 1px var(--douban-green) !important;
 }
 
-.btn-primary {
-  background: var(--primary);
-  color: white;
+.el-textarea__inner:focus {
+  box-shadow: 0 0 0 1px var(--douban-green) !important;
 }
 
-.btn-primary:hover {
-  background: #009a18;
-  box-shadow: var(--shadow-md);
+/* 标签样式 */
+.el-tag {
+  --el-tag-border-radius: 12px;
 }
 
-.btn-secondary {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
+/* 对话框样式 */
+.el-dialog {
+  --el-dialog-border-radius: 16px;
 }
 
-.btn-secondary:hover {
-  background: #e5e5e5;
+.el-dialog__header {
+  padding-bottom: 16px;
+  border-bottom: 1px solid #f0f0f0;
 }
 
-.btn-outline {
-  border: 1.5px solid var(--border-color);
-  color: var(--text-primary);
-  background: transparent;
+.el-dialog__body {
+  padding-top: 20px;
 }
 
-.btn-outline:hover {
-  border-color: var(--primary);
-  color: var(--primary);
+/* 下拉菜单 */
+.el-dropdown-menu {
+  --el-dropdown-menu-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border-radius: 12px !important;
+  padding: 8px !important;
 }
 
-/* ===== 卡片 ===== */
-.card {
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  overflow: hidden;
-  transition: all var(--transition-normal);
+.el-dropdown-menu__item {
+  border-radius: 8px !important;
+  padding: 10px 16px !important;
 }
 
-.card:hover {
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+/* 消息提示样式 */
+.el-message {
+  --el-message-border-radius: 8px;
 }
 
-/* ===== 输入框 ===== */
-.input {
-  width: 100%;
-  padding: 12px 16px;
-  background: var(--bg-secondary);
-  border: 1.5px solid transparent;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+/* 分页器 */
+.el-pagination {
+  --el-pagination-button-bg-color: white;
 }
 
-.input:focus {
-  background: var(--bg-primary);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 3px var(--primary-light);
+.el-pagination .is-active {
+  background: var(--douban-green) !important;
 }
 
-.input::placeholder {
-  color: var(--text-muted);
-}
-
-/* ===== 评分星星 ===== */
-.rating {
-  color: var(--secondary);
-  font-weight: 600;
-}
-
-.rating-stars {
-  display: inline-flex;
-  gap: 2px;
-}
-
-.star {
-  cursor: pointer;
-  transition: transform var(--transition-fast);
-}
-
-.star:hover {
-  transform: scale(1.2);
-}
-
-.star.active {
-  color: var(--secondary);
-}
-
-.star.inactive {
-  color: #ddd;
-}
-
-/* ===== 骨架屏 ===== */
-.skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e8e8e8 50%, #f0f0f0 75%);
-  background-size: 200% 100%;
-  animation: skeleton-loading 1.5s infinite ease-in-out;
-  border-radius: var(--radius-sm);
-}
-
+/* 骨架屏动画 */
 @keyframes skeleton-loading {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 8px;
 }
 
 /* ===== 页面过渡动画 ===== */
 .page-enter-active,
 .page-leave-active {
-  transition: opacity var(--transition-normal), transform var(--transition-normal);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .page-enter-from {
@@ -235,10 +185,9 @@ ul, ol {
   transform: translateY(-10px);
 }
 
-/* ===== 淡入动画 ===== */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity var(--transition-normal);
+  transition: opacity 0.3s ease;
 }
 
 .fade-enter-from,
@@ -246,161 +195,29 @@ ul, ol {
   opacity: 0;
 }
 
-/* ===== 列表交错动画 ===== */
-.list-enter-active {
-  transition: all var(--transition-normal);
+.slide-fade-enter-active {
+  transition: all 0.3s ease-out;
 }
 
-.list-leave-active {
-  transition: all var(--transition-fast);
+.slide-fade-leave-active {
+  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
 }
 
-.list-enter-from {
-  opacity: 0;
+.slide-fade-enter-from,
+.slide-fade-leave-to {
   transform: translateY(20px);
-}
-
-.list-leave-to {
   opacity: 0;
-  transform: translateX(-20px);
-}
-
-.list-move {
-  transition: transform var(--transition-normal);
-}
-
-/* ===== 缩放动画 ===== */
-.scale-enter-active,
-.scale-leave-active {
-  transition: all var(--transition-normal);
-}
-
-.scale-enter-from,
-.scale-leave-to {
-  opacity: 0;
-  transform: scale(0.95);
-}
-
-/* ===== Toast 提示 ===== */
-.toast {
-  position: fixed;
-  top: 80px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 12px 24px;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  border-radius: var(--radius-lg);
-  font-size: 14px;
-  z-index: 9999;
-  animation: toast-in 0.3s ease-out;
-}
-
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
-/* ===== 模态框 ===== */
-.modal-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  animation: fade-in 0.2s ease-out;
-}
-
-.modal-content {
-  background: var(--bg-primary);
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  max-width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: modal-in 0.3s ease-out;
-}
-
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes modal-in {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* ===== 加载动画 ===== */
-.loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--border-color);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ===== 空状态 ===== */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-muted);
-}
-
-.empty-state svg {
-  width: 80px;
-  height: 80px;
-  margin-bottom: 16px;
-  opacity: 0.5;
-}
-
-/* ===== 标签 ===== */
-.tag {
-  display: inline-block;
-  padding: 4px 10px;
-  background: var(--bg-tertiary);
-  border-radius: 20px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  transition: all var(--transition-fast);
-}
-
-.tag:hover {
-  background: var(--primary-light);
-  color: var(--primary);
-}
-
-/* ===== 分割线 ===== */
-.divider {
-  height: 1px;
-  background: var(--border-color);
-  margin: 16px 0;
 }
 
 /* ===== 响应式 ===== */
 @media (max-width: 768px) {
   .container {
     padding: 0 16px;
+  }
+
+  .el-dialog {
+    --el-dialog-width: 90% !important;
+    margin: 0 auto !important;
   }
 
   .hide-mobile {

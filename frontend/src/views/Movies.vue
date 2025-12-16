@@ -1,16 +1,14 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
 import api from '@/api'
 import MovieCard from '@/components/MovieCard.vue'
-import Skeleton from '@/components/Skeleton.vue'
-
-const route = useRoute()
 
 const movies = ref([])
 const loading = ref(true)
 const page = ref(1)
-const totalPages = ref(1)
+const total = ref(0)
+const pageSize = 20
 const selectedGenre = ref('')
 
 const genres = ['剧情', '喜剧', '动作', '爱情', '科幻', '动画', '悬疑', '惊悚', '恐怖', '犯罪', '奇幻', '战争', '音乐', '传记']
@@ -20,13 +18,14 @@ async function fetchMovies() {
   try {
     let res
     if (selectedGenre.value) {
-      res = await api.getMoviesByGenre(selectedGenre.value, page.value, 20)
+      res = await api.getMoviesByGenre(selectedGenre.value, page.value, pageSize)
     } else {
-      res = await api.getMovies(page.value, 20)
+      res = await api.getMovies(page.value, pageSize)
     }
     movies.value = res.items || []
-    totalPages.value = res.totalPages || 1
+    total.value = res.total || 0
   } catch (e) {
+    ElMessage.error('加载电影失败')
     console.error('加载电影失败:', e)
   } finally {
     loading.value = false
@@ -43,8 +42,7 @@ function selectGenre(genre) {
   fetchMovies()
 }
 
-function changePage(p) {
-  if (p < 1 || p > totalPages.value) return
+function handlePageChange(p) {
   page.value = p
   fetchMovies()
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -58,20 +56,31 @@ onMounted(() => {
 <template>
   <div class="movies-page">
     <div class="container">
-      <h1 class="page-title">全部电影</h1>
+      <h1 class="page-title">
+        <el-icon><Film /></el-icon>
+        全部电影
+      </h1>
 
       <!-- 类型筛选 -->
-      <div class="genre-filter">
-        <button
-          v-for="genre in genres"
-          :key="genre"
-          class="genre-tag"
-          :class="{ active: selectedGenre === genre }"
-          @click="selectGenre(genre)"
-        >
-          {{ genre }}
-        </button>
-      </div>
+      <el-card class="filter-card" shadow="never">
+        <div class="filter-header">
+          <el-icon><Filter /></el-icon>
+          <span>类型筛选</span>
+          <el-tag v-if="selectedGenre" type="success" closable @close="selectGenre(selectedGenre)" size="small">
+            {{ selectedGenre }}
+          </el-tag>
+        </div>
+        <div class="genre-filter">
+          <el-check-tag
+            v-for="genre in genres"
+            :key="genre"
+            :checked="selectedGenre === genre"
+            @change="selectGenre(genre)"
+          >
+            {{ genre }}
+          </el-check-tag>
+        </div>
+      </el-card>
 
       <!-- 电影列表 -->
       <div class="movie-grid" v-if="!loading">
@@ -82,35 +91,38 @@ onMounted(() => {
         />
       </div>
       <div class="movie-grid" v-else>
-        <div v-for="i in 20" :key="i" class="skeleton-card">
-          <Skeleton height="200px" border-radius="12px" />
-          <Skeleton width="80%" height="16px" style="margin-top: 12px" />
-          <Skeleton width="50%" height="14px" style="margin-top: 8px" />
-        </div>
+        <el-card v-for="i in 20" :key="i" class="skeleton-card" shadow="never">
+          <el-skeleton animated>
+            <template #template>
+              <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px" />
+              <el-skeleton-item variant="h3" style="width: 80%; margin-top: 12px" />
+              <el-skeleton-item variant="text" style="width: 50%; margin-top: 8px" />
+            </template>
+          </el-skeleton>
+        </el-card>
       </div>
 
       <!-- 空状态 -->
-      <div class="empty-state" v-if="!loading && movies.length === 0">
-        <p>没有找到相关电影</p>
-      </div>
+      <el-empty
+        v-if="!loading && movies.length === 0"
+        description="没有找到相关电影"
+        :image-size="120"
+      >
+        <el-button type="primary" @click="selectedGenre = ''; fetchMovies()">
+          查看全部电影
+        </el-button>
+      </el-empty>
 
       <!-- 分页 -->
-      <div class="pagination" v-if="totalPages > 1">
-        <button
-          class="page-btn"
-          :disabled="page === 1"
-          @click="changePage(page - 1)"
-        >
-          上一页
-        </button>
-        <span class="page-info">{{ page }} / {{ totalPages }}</span>
-        <button
-          class="page-btn"
-          :disabled="page === totalPages"
-          @click="changePage(page + 1)"
-        >
-          下一页
-        </button>
+      <div class="pagination-wrapper" v-if="total > pageSize">
+        <el-pagination
+          v-model:current-page="page"
+          :page-size="pageSize"
+          :total="total"
+          layout="prev, pager, next"
+          background
+          @current-change="handlePageChange"
+        />
       </div>
     </div>
   </div>
@@ -118,41 +130,49 @@ onMounted(() => {
 
 <style scoped>
 .movies-page {
-  padding: 20px 0;
+  padding: 24px 0;
 }
 
 .page-title {
   font-size: 28px;
   font-weight: 600;
   margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title .el-icon {
+  color: var(--douban-green);
+}
+
+.filter-card {
+  margin-bottom: 24px;
+  border-radius: 12px;
+}
+
+.filter-card:hover {
+  transform: none;
+}
+
+.filter-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  font-weight: 500;
+  color: var(--text-secondary);
 }
 
 .genre-filter {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 24px;
 }
 
-.genre-tag {
-  padding: 8px 16px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
+.genre-filter .el-check-tag {
   border-radius: 20px;
-  font-size: 14px;
-  color: var(--text-secondary);
-  transition: all var(--transition-fast);
-}
-
-.genre-tag:hover {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.genre-tag.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
+  padding: 6px 16px;
 }
 
 .movie-grid {
@@ -162,41 +182,17 @@ onMounted(() => {
 }
 
 .skeleton-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: 12px;
+  border-radius: 12px;
 }
 
-.pagination {
+.skeleton-card:hover {
+  transform: none;
+}
+
+.pagination-wrapper {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 20px;
   margin-top: 40px;
-}
-
-.page-btn {
-  padding: 10px 20px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  transition: all var(--transition-fast);
-}
-
-.page-btn:hover:not(:disabled) {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 14px;
-  color: var(--text-muted);
 }
 
 @media (max-width: 768px) {

@@ -1,34 +1,35 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import api from '@/api'
 import MovieCard from '@/components/MovieCard.vue'
-import Skeleton from '@/components/Skeleton.vue'
 
 const route = useRoute()
 
 const movies = ref([])
 const loading = ref(true)
 const page = ref(1)
-const totalPages = ref(1)
+const total = ref(0)
+const pageSize = 20
 const query = ref('')
 
 async function searchMovies() {
   if (!query.value) return
   loading.value = true
   try {
-    const res = await api.searchMovies(query.value, page.value, 20)
+    const res = await api.searchMovies(query.value, page.value, pageSize)
     movies.value = res.items || []
-    totalPages.value = res.totalPages || 1
+    total.value = res.total || 0
   } catch (e) {
+    ElMessage.error('搜索失败')
     console.error('搜索失败:', e)
   } finally {
     loading.value = false
   }
 }
 
-function changePage(p) {
-  if (p < 1 || p > totalPages.value) return
+function handlePageChange(p) {
   page.value = p
   searchMovies()
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -47,8 +48,18 @@ watch(() => route.query.q, (newQ) => {
   <div class="search-page">
     <div class="container">
       <h1 class="page-title">
+        <el-icon><Search /></el-icon>
         搜索结果：<span class="keyword">{{ query }}</span>
       </h1>
+
+      <el-alert
+        v-if="!loading && movies.length > 0"
+        :title="`找到 ${total} 部相关电影`"
+        type="success"
+        :closable="false"
+        show-icon
+        class="result-alert"
+      />
 
       <div class="movie-grid" v-if="!loading && movies.length > 0">
         <MovieCard
@@ -59,33 +70,36 @@ watch(() => route.query.q, (newQ) => {
       </div>
 
       <div class="movie-grid" v-else-if="loading">
-        <div v-for="i in 20" :key="i" class="skeleton-card">
-          <Skeleton height="200px" border-radius="12px" />
-          <Skeleton width="80%" height="16px" style="margin-top: 12px" />
-          <Skeleton width="50%" height="14px" style="margin-top: 8px" />
-        </div>
+        <el-card v-for="i in 20" :key="i" class="skeleton-card" shadow="never">
+          <el-skeleton animated>
+            <template #template>
+              <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px" />
+              <el-skeleton-item variant="h3" style="width: 80%; margin-top: 12px" />
+              <el-skeleton-item variant="text" style="width: 50%; margin-top: 8px" />
+            </template>
+          </el-skeleton>
+        </el-card>
       </div>
 
-      <div class="empty-state" v-else>
-        <p>没有找到与「{{ query }}」相关的电影</p>
-      </div>
+      <el-empty
+        v-else
+        :description="`没有找到与「${query}」相关的电影`"
+        :image-size="120"
+      >
+        <el-button type="primary" @click="$router.push('/movies')">
+          浏览全部电影
+        </el-button>
+      </el-empty>
 
-      <div class="pagination" v-if="totalPages > 1 && !loading">
-        <button
-          class="page-btn"
-          :disabled="page === 1"
-          @click="changePage(page - 1)"
-        >
-          上一页
-        </button>
-        <span class="page-info">{{ page }} / {{ totalPages }}</span>
-        <button
-          class="page-btn"
-          :disabled="page === totalPages"
-          @click="changePage(page + 1)"
-        >
-          下一页
-        </button>
+      <div class="pagination-wrapper" v-if="total > pageSize && !loading">
+        <el-pagination
+          v-model:current-page="page"
+          :page-size="pageSize"
+          :total="total"
+          layout="prev, pager, next"
+          background
+          @current-change="handlePageChange"
+        />
       </div>
     </div>
   </div>
@@ -93,17 +107,29 @@ watch(() => route.query.q, (newQ) => {
 
 <style scoped>
 .search-page {
-  padding: 20px 0;
+  padding: 24px 0;
 }
 
 .page-title {
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.page-title .el-icon {
+  color: var(--douban-green);
 }
 
 .keyword {
-  color: var(--primary);
+  color: var(--douban-green);
+}
+
+.result-alert {
+  margin-bottom: 24px;
+  border-radius: 8px;
 }
 
 .movie-grid {
@@ -113,40 +139,23 @@ watch(() => route.query.q, (newQ) => {
 }
 
 .skeleton-card {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: 12px;
+  border-radius: 12px;
 }
 
-.pagination {
+.skeleton-card:hover {
+  transform: none;
+}
+
+.pagination-wrapper {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 20px;
   margin-top: 40px;
 }
 
-.page-btn {
-  padding: 10px 20px;
-  background: var(--bg-primary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  transition: all var(--transition-fast);
-}
-
-.page-btn:hover:not(:disabled) {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 14px;
-  color: var(--text-muted);
+@media (max-width: 768px) {
+  .movie-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 16px;
+  }
 }
 </style>

@@ -1,10 +1,12 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import api from '@/api'
 import MovieCard from '@/components/MovieCard.vue'
-import Skeleton from '@/components/Skeleton.vue'
 
+const router = useRouter()
 const userStore = useUserStore()
 
 const user = computed(() => userStore.user)
@@ -12,35 +14,30 @@ const activeTab = ref('wish')
 const collections = ref([])
 const loading = ref(true)
 const page = ref(1)
-const totalPages = ref(1)
-
-const tabs = [
-  { key: 'wish', label: '想看' },
-  { key: 'watching', label: '在看' },
-  { key: 'watched', label: '看过' }
-]
+const total = ref(0)
+const pageSize = 20
 
 async function fetchCollections() {
   loading.value = true
   try {
-    const res = await api.getCollections(activeTab.value, page.value, 20)
+    const res = await api.getCollections(activeTab.value, page.value, pageSize)
     collections.value = res.items || []
-    totalPages.value = res.totalPages || 1
+    total.value = res.total || 0
   } catch (e) {
+    ElMessage.error('加载收藏失败')
     console.error('加载收藏失败:', e)
   } finally {
     loading.value = false
   }
 }
 
-function switchTab(tab) {
+function handleTabChange(tab) {
   activeTab.value = tab
   page.value = 1
   fetchCollections()
 }
 
-function changePage(p) {
-  if (p < 1 || p > totalPages.value) return
+function handlePageChange(p) {
   page.value = p
   fetchCollections()
   window.scrollTo({ top: 0, behavior: 'smooth' })
@@ -54,31 +51,51 @@ onMounted(() => {
 <template>
   <div class="profile-page">
     <div class="container">
-      <!-- 用户信息 -->
-      <div class="profile-header">
-        <img :src="user?.avatar" alt="" class="profile-avatar" />
-        <div class="profile-info">
-          <h1 class="profile-name">{{ user?.username }}</h1>
-          <p class="profile-bio">{{ user?.bio || '这个人很懒，什么都没写' }}</p>
-          <p class="profile-meta">
-            加入于 {{ user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-' }}
-          </p>
+      <!-- 用户信息卡片 -->
+      <el-card class="profile-header" shadow="never">
+        <div class="profile-content">
+          <el-avatar :size="100" :src="user?.avatar">
+            <el-icon :size="40"><User /></el-icon>
+          </el-avatar>
+          <div class="profile-info">
+            <h1 class="profile-name">{{ user?.username }}</h1>
+            <p class="profile-bio">{{ user?.bio || '这个人很懒，什么都没写' }}</p>
+            <p class="profile-meta">
+              <el-icon><Calendar /></el-icon>
+              加入于 {{ user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-' }}
+            </p>
+          </div>
+          <el-button class="edit-btn" @click="router.push('/settings')">
+            <el-icon><Edit /></el-icon>
+            编辑资料
+          </el-button>
         </div>
-      </div>
+      </el-card>
 
-      <!-- 收藏标签页 -->
-      <div class="collection-section">
-        <div class="tabs">
-          <button
-            v-for="tab in tabs"
-            :key="tab.key"
-            class="tab-btn"
-            :class="{ active: activeTab === tab.key }"
-            @click="switchTab(tab.key)"
-          >
-            {{ tab.label }}
-          </button>
-        </div>
+      <!-- 收藏内容 -->
+      <el-card class="collection-section" shadow="never">
+        <template #header>
+          <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+            <el-tab-pane label="想看" name="wish">
+              <template #label>
+                <el-icon><Star /></el-icon>
+                想看
+              </template>
+            </el-tab-pane>
+            <el-tab-pane label="在看" name="watching">
+              <template #label>
+                <el-icon><View /></el-icon>
+                在看
+              </template>
+            </el-tab-pane>
+            <el-tab-pane label="看过" name="watched">
+              <template #label>
+                <el-icon><Select /></el-icon>
+                看过
+              </template>
+            </el-tab-pane>
+          </el-tabs>
+        </template>
 
         <!-- 电影列表 -->
         <div class="movie-grid" v-if="!loading && collections.length > 0">
@@ -90,58 +107,56 @@ onMounted(() => {
         </div>
 
         <div class="movie-grid" v-else-if="loading">
-          <div v-for="i in 10" :key="i" class="skeleton-card">
-            <Skeleton height="200px" border-radius="12px" />
-            <Skeleton width="80%" height="16px" style="margin-top: 12px" />
-            <Skeleton width="50%" height="14px" style="margin-top: 8px" />
-          </div>
+          <el-card v-for="i in 10" :key="i" class="skeleton-card" shadow="never">
+            <el-skeleton animated>
+              <template #template>
+                <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px" />
+                <el-skeleton-item variant="h3" style="width: 80%; margin-top: 12px" />
+                <el-skeleton-item variant="text" style="width: 50%; margin-top: 8px" />
+              </template>
+            </el-skeleton>
+          </el-card>
         </div>
 
-        <div class="empty-state" v-else>
-          <p>还没有{{ tabs.find(t => t.key === activeTab)?.label }}的电影</p>
-          <router-link to="/movies" class="btn btn-primary" style="margin-top: 16px">
+        <el-empty
+          v-else
+          :description="`还没有${activeTab === 'wish' ? '想看' : activeTab === 'watching' ? '在看' : '看过'}的电影`"
+          :image-size="120"
+        >
+          <el-button type="primary" @click="router.push('/movies')">
             去发现电影
-          </router-link>
-        </div>
+          </el-button>
+        </el-empty>
 
         <!-- 分页 -->
-        <div class="pagination" v-if="totalPages > 1 && !loading">
-          <button
-            class="page-btn"
-            :disabled="page === 1"
-            @click="changePage(page - 1)"
-          >
-            上一页
-          </button>
-          <span class="page-info">{{ page }} / {{ totalPages }}</span>
-          <button
-            class="page-btn"
-            :disabled="page === totalPages"
-            @click="changePage(page + 1)"
-          >
-            下一页
-          </button>
+        <div class="pagination-wrapper" v-if="total > pageSize && !loading">
+          <el-pagination
+            v-model:current-page="page"
+            :page-size="pageSize"
+            :total="total"
+            layout="prev, pager, next"
+            background
+            @current-change="handlePageChange"
+          />
         </div>
-      </div>
+      </el-card>
     </div>
   </div>
 </template>
 
 <style scoped>
 .profile-page {
-  padding: 20px 0;
+  padding: 24px 0;
 }
 
 .profile-header {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  padding: 32px;
-  background: white;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  margin-bottom: 32px;
+  margin-bottom: 24px;
+  border-radius: 16px;
   animation: fade-up 0.4s ease-out;
+}
+
+.profile-header:hover {
+  transform: none;
 }
 
 @keyframes fade-up {
@@ -151,18 +166,21 @@ onMounted(() => {
   }
 }
 
-.profile-avatar {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-  box-shadow: var(--shadow-md);
+.profile-content {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.profile-info {
+  flex: 1;
 }
 
 .profile-name {
   font-size: 24px;
   font-weight: 600;
   margin-bottom: 8px;
+  color: var(--text-primary);
 }
 
 .profile-bio {
@@ -173,40 +191,36 @@ onMounted(() => {
 .profile-meta {
   font-size: 13px;
   color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.edit-btn {
+  align-self: flex-start;
 }
 
 .collection-section {
-  background: white;
-  border-radius: var(--radius-lg);
-  padding: 24px;
-  box-shadow: var(--shadow-sm);
+  border-radius: 16px;
 }
 
-.tabs {
+.collection-section:hover {
+  transform: none;
+}
+
+.collection-section :deep(.el-card__header) {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.collection-section :deep(.el-tabs__header) {
+  margin: 0;
+}
+
+.collection-section :deep(.el-tabs__item) {
   display: flex;
-  gap: 8px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid var(--border-color);
-  padding-bottom: 16px;
-}
-
-.tab-btn {
-  padding: 10px 24px;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  transition: all var(--transition-fast);
-}
-
-.tab-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-secondary);
-}
-
-.tab-btn.active {
-  color: white;
-  background: var(--primary);
+  align-items: center;
+  gap: 6px;
 }
 
 .movie-grid {
@@ -216,53 +230,31 @@ onMounted(() => {
 }
 
 .skeleton-card {
-  background: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  padding: 12px;
+  border-radius: 12px;
 }
 
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-  color: var(--text-muted);
+.skeleton-card:hover {
+  transform: none;
 }
 
-.pagination {
+.pagination-wrapper {
   display: flex;
-  align-items: center;
   justify-content: center;
-  gap: 20px;
   margin-top: 40px;
 }
 
-.page-btn {
-  padding: 10px 20px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  transition: all var(--transition-fast);
-}
-
-.page-btn:hover:not(:disabled) {
-  border-color: var(--primary);
-  color: var(--primary);
-}
-
-.page-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.page-info {
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
 @media (max-width: 768px) {
-  .profile-header {
+  .profile-content {
     flex-direction: column;
     text-align: center;
+  }
+
+  .edit-btn {
+    align-self: center;
+  }
+
+  .profile-meta {
+    justify-content: center;
   }
 
   .movie-grid {

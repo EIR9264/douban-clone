@@ -1,7 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(find /e/Git/douban-clone -type f -name *.java -o -name *.vue -o -name *.ts -o -name *.json -o -name *.xml -o -name *.yml)"
-    ]
-  }
-}

@@ -40,7 +40,7 @@ const updateStatus = async (row, status) => {
           切换角色
         </el-button>
         <el-button size="small" type="warning" @click="updateStatus(row, row.status === 'ACTIVE' ? 'DISABLED' : 'ACTIVE')">
-          {{ row.status === 'ACTIVE' ? '停用' : '启用' }}
+          {{ row.status === 'ACTIVE' ? '封禁' : '解封' }}
         </el-button>
       </template>
     </el-table-column>

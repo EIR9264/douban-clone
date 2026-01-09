@@ -1,5 +1,6 @@
 package com.douban.config;
 
+import com.douban.mapper.UserMapper;
 import com.douban.util.JwtUtil;
 import com.douban.websocket.UserPrincipal;
 import org.springframework.messaging.Message;
@@ -14,9 +15,11 @@ import org.springframework.stereotype.Component;
 public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
 
     private final JwtUtil jwtUtil;
+    private final UserMapper userMapper;
 
-    public WebSocketAuthChannelInterceptor(JwtUtil jwtUtil) {
+    public WebSocketAuthChannelInterceptor(JwtUtil jwtUtil, UserMapper userMapper) {
         this.jwtUtil = jwtUtil;
+        this.userMapper = userMapper;
     }
 
     @Override
@@ -29,7 +32,10 @@ public class WebSocketAuthChannelInterceptor implements ChannelInterceptor {
             }
             if (token != null && jwtUtil.validateToken(token)) {
                 Long userId = jwtUtil.getUserIdFromToken(token);
-                accessor.setUser(new UserPrincipal(userId.toString()));
+                String status = userMapper.findStatusById(userId);
+                if (status != null && "ACTIVE".equalsIgnoreCase(status)) {
+                    accessor.setUser(new UserPrincipal(userId.toString()));
+                }
             }
         }
         return message;

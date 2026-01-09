@@ -9,6 +9,9 @@ public interface UserMapper {
     @Select("SELECT * FROM users WHERE id = #{id}")
     User findById(Long id);
 
+    @Select("SELECT status FROM users WHERE id = #{id}")
+    String findStatusById(@Param("id") Long id);
+
     @Select("SELECT * FROM users WHERE username = #{username}")
     User findByUsername(String username);
 

@@ -15,18 +15,21 @@ public interface SiteMessageMapper {
     @Select("SELECT * FROM site_messages WHERE receiver_id = #{receiverId} ORDER BY created_at DESC LIMIT #{limit} OFFSET #{offset}")
     List<SiteMessage> findByReceiver(@Param("receiverId") Long receiverId, @Param("limit") int limit, @Param("offset") int offset);
 
+    @Select("SELECT COUNT(*) FROM site_messages WHERE receiver_id = #{receiverId}")
+    int countByReceiver(@Param("receiverId") Long receiverId);
+
     @Select("SELECT * FROM site_messages WHERE receiver_id = #{receiverId} AND status = 'UNREAD' ORDER BY created_at DESC")
     List<SiteMessage> findUnread(@Param("receiverId") Long receiverId);
 
     @Update({
             "<script>",
-            "UPDATE site_messages SET status = 'READ' WHERE id IN",
+            "UPDATE site_messages SET status = 'READ' WHERE receiver_id = #{receiverId} AND id IN",
             "<foreach item='id' collection='ids' open='(' separator=',' close=')'>",
             "#{id}",
             "</foreach>",
             "</script>"
     })
-    int markRead(@Param("ids") List<Long> ids);
+    int markRead(@Param("receiverId") Long receiverId, @Param("ids") List<Long> ids);
 
     @Select("SELECT COUNT(*) FROM site_messages WHERE receiver_id = #{receiverId} AND status = 'UNREAD'")
     int countUnread(@Param("receiverId") Long receiverId);

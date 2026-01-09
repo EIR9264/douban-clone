@@ -1,27 +1,35 @@
-/* ===== Element Plus 主题覆盖 ===== */
+/* ===== Element Plus Theme Override ===== */
 :root {
-  --el-color-primary: #00b386;
-  --el-color-primary-light-3: #4dd4ac;
-  --el-color-primary-light-5: #80e0c3;
-  --el-color-primary-light-7: #b3ecda;
-  --el-color-primary-light-8: #ccf3e7;
-  --el-color-primary-light-9: #e6f9f3;
-  --el-color-primary-dark-2: #009970;
+  /* iOS-like accent palette */
+  --el-color-primary: #34c759;
+  --el-color-primary-light-3: #63d977;
+  --el-color-primary-light-5: #8ae59a;
+  --el-color-primary-light-7: #b3efc1;
+  --el-color-primary-light-8: #d1f6d8;
+  --el-color-primary-light-9: #e8fbec;
+  --el-color-primary-dark-2: #2aa94b;
 
-  --el-border-radius-base: 8px;
-  --el-border-radius-small: 4px;
-  --el-border-radius-round: 20px;
+  --el-border-radius-base: 10px;
+  --el-border-radius-small: 6px;
+  --el-border-radius-round: 999px;
 
-  /* 自定义变量 */
-  --douban-green: #00b386;
-  --douban-orange: #ff9500;
-  --text-primary: #303133;
-  --text-secondary: #606266;
-  --text-muted: #909399;
-  --bg-page: #f5f5f5;
+  /* App tokens */
+  --douban-green: #34c759;
+  --douban-orange: #ff9f0a;
+
+  --text-primary: #1c1c1e;
+  --text-secondary: #3a3a3c;
+  --text-muted: #8e8e93;
+
+  --bg-page: #f2f2f7;
+  --bg-surface: #ffffff;
+  --separator: rgba(60, 60, 67, 0.12);
+
+  --shadow-surface: 0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-surface-hover: 0 10px 28px rgba(0, 0, 0, 0.08);
 }
 
-/* ===== 重置与基础 ===== */
+/* ===== Reset ===== */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -57,137 +65,124 @@ ul, ol {
   list-style: none;
 }
 
-/* ===== 工具类 ===== */
+/* ===== Layout ===== */
 .container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 20px;
 }
 
-/* ===== Element Plus 组件覆盖 ===== */
-
-/* 评分星星颜色 */
+/* ===== Element Plus overrides ===== */
 .el-rate {
   --el-rate-fill-color: var(--douban-orange) !important;
-  --el-rate-void-color: #c6d1de !important;
+  --el-rate-void-color: rgba(60, 60, 67, 0.25) !important;
 }
 
 .el-rate__icon {
   font-size: inherit !important;
 }
 
-/* 卡片悬浮效果 */
 .el-card {
-  --el-card-border-radius: 12px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  border: none;
+  --el-card-border-radius: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: 1px solid var(--separator);
+  background: var(--bg-surface);
 }
 
 .el-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-surface-hover);
 }
 
-/* 按钮样式优化 */
 .el-button--primary {
   --el-button-bg-color: var(--douban-green);
   --el-button-border-color: var(--douban-green);
-  --el-button-hover-bg-color: #00c794;
-  --el-button-hover-border-color: #00c794;
-  --el-button-active-bg-color: #009970;
-  --el-button-active-border-color: #009970;
+  --el-button-hover-bg-color: #2ecc55;
+  --el-button-hover-border-color: #2ecc55;
+  --el-button-active-bg-color: #29b14b;
+  --el-button-active-border-color: #29b14b;
 }
 
-/* 输入框聚焦效果 */
 .el-input__wrapper:focus-within {
-  box-shadow: 0 0 0 1px var(--douban-green) !important;
+  box-shadow: 0 0 0 1px rgba(52, 199, 89, 0.7) !important;
 }
 
 .el-textarea__inner:focus {
-  box-shadow: 0 0 0 1px var(--douban-green) !important;
+  box-shadow: 0 0 0 1px rgba(52, 199, 89, 0.7) !important;
 }
 
-/* 标签样式 */
 .el-tag {
-  --el-tag-border-radius: 12px;
+  --el-tag-border-radius: 999px;
 }
 
-/* 对话框样式 */
 .el-dialog {
-  --el-dialog-border-radius: 16px;
+  --el-dialog-border-radius: 18px;
 }
 
 .el-dialog__header {
   padding-bottom: 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--separator);
 }
 
 .el-dialog__body {
   padding-top: 20px;
 }
 
-/* 下拉菜单 */
 .el-dropdown-menu {
-  --el-dropdown-menu-box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  border-radius: 12px !important;
+  --el-dropdown-menu-box-shadow: var(--shadow-surface);
+  border-radius: 14px !important;
   padding: 8px !important;
 }
 
 .el-dropdown-menu__item {
-  border-radius: 8px !important;
-  padding: 10px 16px !important;
+  border-radius: 10px !important;
+  padding: 10px 14px !important;
 }
 
-/* 消息提示样式 */
 .el-message {
-  --el-message-border-radius: 8px;
+  --el-message-border-radius: 12px;
 }
 
-/* 分页器 */
 .el-pagination {
-  --el-pagination-button-bg-color: white;
+  --el-pagination-button-bg-color: var(--bg-surface);
 }
 
 .el-pagination .is-active {
   background: var(--douban-green) !important;
 }
 
-/* 骨架屏动画 */
+/* ===== Skeleton ===== */
 @keyframes skeleton-loading {
-  0% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0 50%;
-  }
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background: linear-gradient(90deg, #ececf1 25%, #e2e2ea 50%, #ececf1 75%);
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
-/* ===== 页面过渡动画 ===== */
+/* ===== Page transitions ===== */
 .page-enter-active,
 .page-leave-active {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition: opacity 0.25s ease, transform 0.25s ease;
 }
 
 .page-enter-from {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateY(8px);
 }
 
 .page-leave-to {
   opacity: 0;
-  transform: translateY(-10px);
+  transform: translateY(-8px);
 }
 
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s ease;
+  transition: opacity 0.25s ease;
 }
 
 .fade-enter-from,
@@ -195,28 +190,34 @@ ul, ol {
   opacity: 0;
 }
 
-.slide-fade-enter-active {
-  transition: all 0.3s ease-out;
+/* ===== List transitions ===== */
+.list-enter-active,
+.list-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
 }
 
-.slide-fade-leave-active {
-  transition: all 0.2s cubic-bezier(1, 0.5, 0.8, 1);
-}
-
-.slide-fade-enter-from,
-.slide-fade-leave-to {
-  transform: translateY(20px);
+.list-enter-from {
   opacity: 0;
+  transform: translateY(8px);
 }
 
-/* ===== 响应式 ===== */
+.list-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.list-move {
+  transition: transform 0.22s ease;
+}
+
+/* ===== Responsive ===== */
 @media (max-width: 768px) {
   .container {
     padding: 0 16px;
   }
 
   .el-dialog {
-    --el-dialog-width: 90% !important;
+    --el-dialog-width: 92% !important;
     margin: 0 auto !important;
   }
 

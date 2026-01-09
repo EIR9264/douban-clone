@@ -7,7 +7,11 @@ import java.util.List;
 @Mapper
 public interface MovieMapper {
 
-    @Select("SELECT * FROM movies WHERE id = #{id}")
+    @Select("SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count " +
+            "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt " +
+            "ON m.id = rt.movie_id " +
+            "WHERE m.id = #{id}")
     Movie findById(Long id);
 
     @Insert("INSERT INTO movies (title, original_title, year, directors, actors, genres, country, language, duration, rating, rating_count, summary, poster, images) " +
@@ -21,48 +25,107 @@ public interface MovieMapper {
     @Delete("DELETE FROM movies WHERE id = #{id}")
     int delete(@Param("id") Long id);
 
-    @Select("SELECT * FROM movies ORDER BY rating DESC, rating_count DESC LIMIT #{limit} OFFSET #{offset}")
+    @Select("SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count " +
+            "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt " +
+            "ON m.id = rt.movie_id " +
+            "ORDER BY rating DESC, rating_count DESC LIMIT #{limit} OFFSET #{offset}")
     List<Movie> findAll(@Param("limit") int limit, @Param("offset") int offset);
 
     @Select("SELECT COUNT(*) FROM movies")
     int count();
 
-    @Select("SELECT * FROM movies ORDER BY rating DESC, rating_count DESC LIMIT #{limit}")
+    @Select("SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count " +
+            "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt " +
+            "ON m.id = rt.movie_id " +
+            "ORDER BY rating DESC, rating_count DESC LIMIT #{limit}")
     List<Movie> findTopRated(@Param("limit") int limit);
 
-    @Select("SELECT * FROM movies ORDER BY created_at DESC LIMIT #{limit}")
+    @Select("SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count " +
+            "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt " +
+            "ON m.id = rt.movie_id " +
+            "ORDER BY m.created_at DESC LIMIT #{limit}")
     List<Movie> findRecent(@Param("limit") int limit);
 
-    @Select("SELECT * FROM movies WHERE title LIKE CONCAT('%', #{keyword}, '%') OR original_title LIKE CONCAT('%', #{keyword}, '%') OR directors LIKE CONCAT('%', #{keyword}, '%') OR actors LIKE CONCAT('%', #{keyword}, '%') ORDER BY rating DESC LIMIT #{limit} OFFSET #{offset}")
+    @Select("SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count " +
+            "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt " +
+            "ON m.id = rt.movie_id " +
+            "WHERE m.title LIKE CONCAT('%', #{keyword}, '%') OR m.original_title LIKE CONCAT('%', #{keyword}, '%') OR m.directors LIKE CONCAT('%', #{keyword}, '%') OR m.actors LIKE CONCAT('%', #{keyword}, '%') " +
+            "ORDER BY rating DESC LIMIT #{limit} OFFSET #{offset}")
     List<Movie> search(@Param("keyword") String keyword, @Param("limit") int limit, @Param("offset") int offset);
 
     @Select("SELECT COUNT(*) FROM movies WHERE title LIKE CONCAT('%', #{keyword}, '%') OR original_title LIKE CONCAT('%', #{keyword}, '%') OR directors LIKE CONCAT('%', #{keyword}, '%') OR actors LIKE CONCAT('%', #{keyword}, '%')")
     int countByKeyword(@Param("keyword") String keyword);
 
-    @Select("SELECT * FROM movies WHERE genres LIKE CONCAT('%', #{genre}, '%') ORDER BY rating DESC LIMIT #{limit} OFFSET #{offset}")
+    @Select("SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count " +
+            "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt " +
+            "ON m.id = rt.movie_id " +
+            "WHERE m.genres LIKE CONCAT('%', #{genre}, '%') " +
+            "ORDER BY rating DESC LIMIT #{limit} OFFSET #{offset}")
     List<Movie> findByGenre(@Param("genre") String genre, @Param("limit") int limit, @Param("offset") int offset);
+
+    @Select("SELECT COUNT(*) FROM movies WHERE genres LIKE CONCAT('%', #{genre}, '%')")
+    int countByGenre(@Param("genre") String genre);
+
+    @Select("""
+            <script>
+            SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count
+            FROM movies m
+            LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt
+            ON m.id = rt.movie_id
+            WHERE 1=1
+            <foreach collection="genres" item="g">
+              AND m.genres LIKE CONCAT('%', #{g}, '%')
+            </foreach>
+            ORDER BY rating DESC, rating_count DESC
+            LIMIT #{limit} OFFSET #{offset}
+            </script>
+            """)
+    List<Movie> findByGenresAll(@Param("genres") List<String> genres, @Param("limit") int limit, @Param("offset") int offset);
+
+    @Select("""
+            <script>
+            SELECT COUNT(*)
+            FROM movies m
+            WHERE 1=1
+            <foreach collection="genres" item="g">
+              AND m.genres LIKE CONCAT('%', #{g}, '%')
+            </foreach>
+            </script>
+            """)
+    int countByGenresAll(@Param("genres") List<String> genres);
 
     @Update("UPDATE movies SET rating = #{rating}, rating_count = #{ratingCount} WHERE id = #{id}")
     int updateRating(@Param("id") Long id, @Param("rating") java.math.BigDecimal rating, @Param("ratingCount") int ratingCount);
 
-    @Select("SELECT m.*, COALESCE(r.review_count, 0) AS review_count " +
+    @Select("SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count, COALESCE(r.review_count, 0) AS review_count " +
             "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt " +
+            "ON m.id = rt.movie_id " +
             "LEFT JOIN (SELECT movie_id, COUNT(*) AS review_count FROM reviews GROUP BY movie_id) r " +
             "ON m.id = r.movie_id " +
             "ORDER BY COALESCE(review_count, 0) DESC, m.rating DESC, m.rating_count DESC " +
             "LIMIT #{limit}")
     List<Movie> findMostReviewed(@Param("limit") int limit);
 
-    @Select("SELECT m.*, COALESCE(c.wish_count, 0) AS wish_count " +
+    @Select("SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count, COALESCE(c.wish_count, 0) AS wish_count " +
             "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt " +
+            "ON m.id = rt.movie_id " +
             "LEFT JOIN (SELECT movie_id, COUNT(*) AS wish_count FROM collections WHERE status = 'wish' GROUP BY movie_id) c " +
             "ON m.id = c.movie_id " +
             "ORDER BY wish_count DESC, m.rating_count DESC, m.rating DESC " +
             "LIMIT #{limit}")
     List<Movie> findMostWished(@Param("limit") int limit);
 
-    @Select("SELECT m.*, COALESCE(c.watched_count, 0) AS watched_count " +
+    @Select("SELECT m.*, COALESCE(rt.rating, 0) AS rating, COALESCE(rt.rating_count, 0) AS rating_count, COALESCE(c.watched_count, 0) AS watched_count " +
             "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, ROUND(AVG(score), 1) AS rating, COUNT(*) AS rating_count FROM ratings GROUP BY movie_id) rt " +
+            "ON m.id = rt.movie_id " +
             "LEFT JOIN (SELECT movie_id, COUNT(*) AS watched_count FROM collections WHERE status = 'watched' GROUP BY movie_id) c " +
             "ON m.id = c.movie_id " +
             "ORDER BY watched_count DESC, m.rating_count DESC, m.rating DESC " +

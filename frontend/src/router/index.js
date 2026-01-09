@@ -50,6 +50,12 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
+    path: '/notifications',
+    name: 'Notifications',
+    component: () => import('@/views/Notifications.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
     path: '/admin/login',
     name: 'AdminLogin',
     component: () => import('@/views/admin/AdminLogin.vue')
@@ -58,11 +64,13 @@ const routes = [
     path: '/admin',
     component: () => import('@/views/admin/AdminLayout.vue'),
     meta: { requiresAdmin: true },
+    redirect: '/admin/dashboard',
     children: [
       { path: 'dashboard', name: 'AdminDashboard', component: () => import('@/views/admin/AdminDashboard.vue') },
       { path: 'movies', name: 'AdminMovies', component: () => import('@/views/admin/AdminMovies.vue') },
       { path: 'users', name: 'AdminUsers', component: () => import('@/views/admin/AdminUsers.vue') },
       { path: 'reviews', name: 'AdminReviews', component: () => import('@/views/admin/AdminReviews.vue') },
+      { path: 'ratings', name: 'AdminRatings', component: () => import('@/views/admin/AdminRatings.vue') },
       { path: 'messages', name: 'AdminMessages', component: () => import('@/views/admin/AdminMessages.vue') },
       { path: 'announcements', name: 'AdminAnnouncements', component: () => import('@/views/admin/AdminAnnouncements.vue') }
     ]
@@ -94,13 +102,13 @@ router.beforeEach((to, from, next) => {
         if (userStore.user?.role === 'ADMIN') {
           next()
         } else {
-          next({ name: 'Login' })
+          next({ name: 'AdminLogin' })
         }
       })
       return
     }
     if (userStore.user?.role !== 'ADMIN') {
-      next({ name: 'Login' })
+      next({ name: 'AdminLogin' })
       return
     }
     next()

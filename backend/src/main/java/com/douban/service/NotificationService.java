@@ -1,6 +1,7 @@
 package com.douban.service;
 
 import com.douban.entity.SiteMessage;
+import com.douban.dto.PageResult;
 import com.douban.mapper.SiteMessageMapper;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
@@ -53,9 +54,18 @@ public class NotificationService {
         return siteMessageMapper.findByReceiver(userId, size, offset);
     }
 
-    public void markRead(List<Long> ids) {
+    public PageResult<SiteMessage> listPage(Long userId, int page, int size) {
+        int safePage = Math.max(1, page);
+        int safeSize = Math.min(50, Math.max(1, size));
+        int offset = (safePage - 1) * safeSize;
+        List<SiteMessage> items = siteMessageMapper.findByReceiver(userId, safeSize, offset);
+        int total = siteMessageMapper.countByReceiver(userId);
+        return new PageResult<>(items, safePage, safeSize, total);
+    }
+
+    public void markRead(Long userId, List<Long> ids) {
         if (ids != null && !ids.isEmpty()) {
-            siteMessageMapper.markRead(ids);
+            siteMessageMapper.markRead(userId, ids);
         }
     }
 

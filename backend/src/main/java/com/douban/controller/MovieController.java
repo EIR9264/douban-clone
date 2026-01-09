@@ -92,6 +92,14 @@ public class MovieController {
         return ResponseEntity.ok(movieService.getByGenre(genre, page, size));
     }
 
+    @GetMapping("/genres")
+    public ResponseEntity<PageResult<Movie>> getByGenres(
+            @RequestParam List<String> genres,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ResponseEntity.ok(movieService.getByGenres(genres, page, size));
+    }
+
     // 评分
     @PostMapping("/{id}/rating")
     public ResponseEntity<?> rateMovie(

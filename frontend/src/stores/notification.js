@@ -6,6 +6,7 @@ import { Client } from '@stomp/stompjs'
 
 export const useNotificationStore = defineStore('notification', () => {
   const messages = ref([])
+  const announcements = ref([])
   const unreadCount = ref(0)
   const client = ref(null)
 
@@ -39,7 +40,7 @@ export const useNotificationStore = defineStore('notification', () => {
         })
         stompClient.subscribe('/topic/announcement', (msg) => {
           const body = JSON.parse(msg.body)
-          messages.value.unshift(body)
+          announcements.value.unshift(body)
         })
       },
       reconnectDelay: 5000,
@@ -57,6 +58,7 @@ export const useNotificationStore = defineStore('notification', () => {
 
   return {
     messages,
+    announcements,
     unreadCount,
     loadUnread,
     markRead,

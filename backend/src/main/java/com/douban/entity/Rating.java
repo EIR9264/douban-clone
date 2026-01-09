@@ -15,4 +15,8 @@ public class Rating {
     // 关联字段
     private String username;
     private String avatar;
+
+    private String movieTitle;
+    private String moviePoster;
+    private Integer movieYear;
 }

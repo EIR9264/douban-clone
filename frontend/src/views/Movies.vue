@@ -9,7 +9,7 @@ const loading = ref(true)
 const page = ref(1)
 const total = ref(0)
 const pageSize = 20
-const selectedGenre = ref('')
+const selectedGenres = ref([])
 
 const genres = ['剧情', '喜剧', '动作', '爱情', '科幻', '动画', '悬疑', '惊悚', '恐怖', '犯罪', '奇幻', '战争', '音乐', '传记']
 
@@ -17,8 +17,8 @@ async function fetchMovies() {
   loading.value = true
   try {
     let res
-    if (selectedGenre.value) {
-      res = await api.getMoviesByGenre(selectedGenre.value, page.value, pageSize)
+    if (selectedGenres.value.length > 0) {
+      res = await api.getMoviesByGenres(selectedGenres.value, page.value, pageSize)
     } else {
       res = await api.getMovies(page.value, pageSize)
     }
@@ -33,11 +33,18 @@ async function fetchMovies() {
 }
 
 function selectGenre(genre) {
-  if (selectedGenre.value === genre) {
-    selectedGenre.value = ''
-  } else {
-    selectedGenre.value = genre
-  }
+  const current = selectedGenres.value.slice()
+  const idx = current.indexOf(genre)
+  if (idx >= 0) current.splice(idx, 1)
+  else current.push(genre)
+  selectedGenres.value = current
+  page.value = 1
+  fetchMovies()
+}
+
+function clearGenres() {
+  if (selectedGenres.value.length === 0) return
+  selectedGenres.value = []
   page.value = 1
   fetchMovies()
 }
@@ -66,15 +73,27 @@ onMounted(() => {
         <div class="filter-header">
           <el-icon><Filter /></el-icon>
           <span>类型筛选</span>
-          <el-tag v-if="selectedGenre" type="success" closable @close="selectGenre(selectedGenre)" size="small">
-            {{ selectedGenre }}
-          </el-tag>
+          <transition-group name="list" tag="div" class="selected-tags">
+            <el-tag
+              v-for="g in selectedGenres"
+              :key="g"
+              type="success"
+              closable
+              @close="selectGenre(g)"
+              size="small"
+            >
+              {{ g }}
+            </el-tag>
+          </transition-group>
+          <el-button v-if="selectedGenres.length > 0" class="clear-btn" link type="primary" @click="clearGenres">
+            清空
+          </el-button>
         </div>
         <div class="genre-filter">
           <el-check-tag
             v-for="genre in genres"
             :key="genre"
-            :checked="selectedGenre === genre"
+            :checked="selectedGenres.includes(genre)"
             @change="selectGenre(genre)"
           >
             {{ genre }}
@@ -83,13 +102,9 @@ onMounted(() => {
       </el-card>
 
       <!-- 电影列表 -->
-      <div class="movie-grid" v-if="!loading">
-        <MovieCard
-          v-for="movie in movies"
-          :key="movie.id"
-          :movie="movie"
-        />
-      </div>
+      <transition-group v-if="!loading" name="list" tag="div" class="movie-grid">
+        <MovieCard v-for="movie in movies" :key="movie.id" :movie="movie" />
+      </transition-group>
       <div class="movie-grid" v-else>
         <el-card v-for="i in 20" :key="i" class="skeleton-card" shadow="never">
           <el-skeleton animated>
@@ -108,7 +123,7 @@ onMounted(() => {
         description="没有找到相关电影"
         :image-size="120"
       >
-        <el-button type="primary" @click="selectedGenre = ''; fetchMovies()">
+        <el-button type="primary" @click="clearGenres">
           查看全部电影
         </el-button>
       </el-empty>
@@ -162,6 +177,17 @@ onMounted(() => {
   margin-bottom: 16px;
   font-weight: 500;
   color: var(--text-secondary);
+  flex-wrap: wrap;
+}
+
+.selected-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.clear-btn {
+  margin-left: auto;
 }
 
 .genre-filter {

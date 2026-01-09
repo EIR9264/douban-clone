@@ -50,4 +50,14 @@ public interface ReviewMapper {
 
     @Select("SELECT COUNT(*) FROM reviews")
     int countAll();
+
+    @Select("SELECT r.*, u.username, u.avatar, rt.score as user_rating, " +
+            "m.title as movie_title, m.poster as movie_poster, m.year as movie_year " +
+            "FROM reviews r " +
+            "LEFT JOIN users u ON r.user_id = u.id " +
+            "LEFT JOIN ratings rt ON r.user_id = rt.user_id AND r.movie_id = rt.movie_id " +
+            "LEFT JOIN movies m ON r.movie_id = m.id " +
+            "ORDER BY r.created_at DESC " +
+            "LIMIT #{limit} OFFSET #{offset}")
+    List<Review> findAllWithDetails(@Param("limit") int limit, @Param("offset") int offset);
 }

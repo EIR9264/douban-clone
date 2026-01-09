@@ -21,6 +21,16 @@ const ratingDisplay = computed(() => {
   return Number(rating).toFixed(1)
 })
 
+const genresDisplay = computed(() => {
+  const genres = props.movie.genres
+  if (!genres) return ''
+  return String(genres)
+    .split(',')
+    .map((g) => g.trim())
+    .filter(Boolean)
+    .join(' · ')
+})
+
 const posterUrl = computed(() => {
   if (imgError.value || !props.movie.poster) {
     return ''
@@ -64,18 +74,20 @@ function handleImgError() {
       <div class="info">
         <h3 class="title">{{ movie.title }}</h3>
         <div class="meta">
-          <el-tag v-if="ratingDisplay !== '暂无'" type="warning" size="small" effect="plain">
-            <el-icon><Star /></el-icon>
-            {{ ratingDisplay }}
-          </el-tag>
-          <el-tag v-if="movie.hot" type="success" size="small" effect="plain">
-            <el-icon><TrendCharts /></el-icon>
-            {{ movie.hot }}
-          </el-tag>
-          <span class="year">{{ movie.year }}</span>
+          <div class="badges">
+            <span v-if="ratingDisplay !== '暂无'" class="pill pill-rating">
+              <el-icon><Star /></el-icon>
+              <span>{{ ratingDisplay }}</span>
+            </span>
+            <span v-if="movie.hot" class="pill pill-hot">
+              <el-icon><TrendCharts /></el-icon>
+              <span>{{ movie.hot }}</span>
+            </span>
+          </div>
+          <span v-if="movie.year" class="year">{{ movie.year }}</span>
         </div>
-        <div class="genres" v-if="movie.genres">
-          {{ movie.genres }}
+        <div class="genres" v-if="genresDisplay">
+          {{ genresDisplay }}
         </div>
       </div>
     </el-card>
@@ -93,10 +105,11 @@ function handleImgError() {
   border-radius: 12px;
   overflow: hidden;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 1px solid var(--separator);
 }
 
 .movie-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-2px);
 }
 
 .poster-wrapper {
@@ -183,14 +196,15 @@ function handleImgError() {
 }
 
 .info {
-  padding: 14px;
+  padding: 12px 12px 14px;
+  background: var(--bg-surface);
 }
 
 .title {
   font-size: 15px;
-  font-weight: 600;
+  font-weight: 650;
   line-height: 1.4;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -201,25 +215,56 @@ function handleImgError() {
 .meta {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 10px;
   font-size: 13px;
 }
 
-.meta :deep(.el-tag) {
-  border-radius: 4px;
+.badges {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
 }
 
-.meta :deep(.el-tag .el-icon) {
-  margin-right: 2px;
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  border: 1px solid var(--separator);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.pill :deep(.el-icon) {
+  font-size: 14px;
+}
+
+.pill-rating {
+  background: rgba(255, 159, 10, 0.12);
+  border-color: rgba(255, 159, 10, 0.18);
+  color: #b15b00;
+}
+
+.pill-hot {
+  background: rgba(52, 199, 89, 0.12);
+  border-color: rgba(52, 199, 89, 0.18);
+  color: #1f7a36;
 }
 
 .year {
   color: var(--text-muted);
   font-size: 13px;
+  white-space: nowrap;
 }
 
 .genres {
-  margin-top: 8px;
+  margin-top: 10px;
   font-size: 12px;
   color: var(--text-muted);
   white-space: nowrap;

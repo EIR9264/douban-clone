@@ -17,6 +17,7 @@ const handleLogin = async () => {
     await userStore.login(username.value, password.value)
     if (userStore.user?.role !== 'ADMIN') {
       ElMessage.error('非管理员账户')
+      userStore.logout()
       return
     }
     const redirect = route.query.redirect || '/admin/dashboard'

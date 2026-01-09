@@ -37,6 +37,7 @@ const api = {
   listUnreadNotifications: () => instance.get('/notifications/unread'),
   listNotifications: (page = 1, size = 20) => instance.get('/notifications', { params: { page, size } }),
   markNotificationsRead: (ids) => instance.post('/notifications/read', ids),
+  listAnnouncements: () => instance.get('/announcements'),
 
   // 电影
   getMovies: (page = 1, size = 20) => instance.get('/movies', { params: { page, size } }),
@@ -49,6 +50,8 @@ const api = {
   getMostWatchedMovies: (limit = 10) => instance.get('/movies/most-watched', { params: { limit } }),
   searchMovies: (q, page = 1, size = 20) => instance.get('/movies/search', { params: { q, page, size } }),
   getMoviesByGenre: (genre, page = 1, size = 20) => instance.get(`/movies/genre/${genre}`, { params: { page, size } }),
+  getMoviesByGenres: (genres = [], page = 1, size = 20) =>
+    instance.get('/movies/genres', { params: { genres: Array.isArray(genres) ? genres.join(',') : genres, page, size } }),
 
   // 首页
   getRecommendations: () => instance.get('/home/recommendations'),
@@ -83,7 +86,13 @@ const api = {
   adminUpdateUserStatus: (id, status) => instance.put(`/admin/users/${id}/status`, { status }),
 
   // 管理员 - 评论
+  adminListReviews: (page = 1, size = 20) => instance.get('/admin/reviews', { params: { page, size } }),
   adminDeleteReview: (id) => instance.delete(`/admin/reviews/${id}`),
+
+  // 管理员 - 评分
+  adminListRatings: (page = 1, size = 20) => instance.get('/admin/ratings', { params: { page, size } }),
+  adminUpdateRatingScore: (id, score) => instance.put(`/admin/ratings/${id}`, { score }),
+  adminDeleteRating: (id) => instance.delete(`/admin/ratings/${id}`),
 
   // 管理员 - 公告 / 站内信
   adminListAnnouncements: () => instance.get('/admin/announcements'),

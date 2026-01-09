@@ -1,8 +1,8 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useUserStore } from '@/stores/user'
 import { useNotificationStore } from '@/stores/notification'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -15,18 +15,29 @@ const user = computed(() => userStore.user)
 const unread = computed(() => notificationStore.unreadCount)
 
 function handleSearch() {
-  if (searchQuery.value.trim()) {
-    router.push({ name: 'Search', query: { q: searchQuery.value.trim() } })
-    searchQuery.value = ''
-  }
+  if (!searchQuery.value.trim()) return
+  router.push({ name: 'Search', query: { q: searchQuery.value.trim() } })
+  searchQuery.value = ''
 }
 
 function handleCommand(command) {
+  if (command === 'notifications') {
+    router.push('/notifications')
+    return
+  }
+  if (command === 'admin') {
+    router.push('/admin/dashboard')
+    return
+  }
   if (command === 'profile') {
     router.push('/profile')
-  } else if (command === 'settings') {
+    return
+  }
+  if (command === 'settings') {
     router.push('/settings')
-  } else if (command === 'logout') {
+    return
+  }
+  if (command === 'logout') {
     userStore.logout()
     router.push('/')
   }
@@ -41,15 +52,11 @@ function handleCommand(command) {
         <span class="logo-text">豆瓣电影</span>
       </router-link>
 
-      <el-menu
-        mode="horizontal"
-        :ellipsis="false"
-        router
-        class="nav-menu hide-mobile"
-      >
+      <el-menu mode="horizontal" :ellipsis="false" router class="nav-menu hide-mobile">
         <el-menu-item index="/">首页</el-menu-item>
         <el-menu-item index="/movies">电影</el-menu-item>
         <el-menu-item index="/rankings">排行榜</el-menu-item>
+        <el-menu-item v-if="user?.role === 'ADMIN'" index="/admin/dashboard">管理后台</el-menu-item>
       </el-menu>
 
       <div class="search-box">
@@ -65,10 +72,14 @@ function handleCommand(command) {
       <div class="nav-right">
         <template v-if="isLoggedIn">
           <el-badge :value="unread" class="message-badge" type="danger" v-if="unread">
-            <el-button link @click="router.push('/settings')">
+            <el-button link @click="router.push('/notifications')">
               <el-icon><Bell /></el-icon>
             </el-button>
           </el-badge>
+          <el-button v-else link @click="router.push('/notifications')">
+            <el-icon><Bell /></el-icon>
+          </el-button>
+
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="user-trigger">
               <el-avatar :size="32" :src="user?.avatar">
@@ -79,6 +90,14 @@ function handleCommand(command) {
             </div>
             <template #dropdown>
               <el-dropdown-menu>
+                <el-dropdown-item command="notifications">
+                  <el-icon><Bell /></el-icon>
+                  消息中心
+                </el-dropdown-item>
+                <el-dropdown-item v-if="user?.role === 'ADMIN'" command="admin">
+                  <el-icon><Management /></el-icon>
+                  管理后台
+                </el-dropdown-item>
                 <el-dropdown-item command="profile">
                   <el-icon><User /></el-icon>
                   我的主页
@@ -96,9 +115,7 @@ function handleCommand(command) {
           </el-dropdown>
         </template>
         <template v-else>
-          <el-button type="primary" round @click="router.push('/login')">
-            登录
-          </el-button>
+          <el-button type="primary" round @click="router.push('/login')">登录</el-button>
         </template>
       </div>
     </div>
@@ -232,3 +249,4 @@ export default {
   }
 }
 </style>
+

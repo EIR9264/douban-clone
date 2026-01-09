@@ -11,6 +11,9 @@ public interface AnnouncementMapper {
     @Select("SELECT * FROM announcements ORDER BY created_at DESC")
     List<Announcement> findAll();
 
+    @Select("SELECT * FROM announcements WHERE active = 1 ORDER BY created_at DESC")
+    List<Announcement> findActive();
+
     @Insert("INSERT INTO announcements (title, content, active, created_by) VALUES (#{title}, #{content}, #{active}, #{createdBy})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(Announcement announcement);

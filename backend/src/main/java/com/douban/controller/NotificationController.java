@@ -1,6 +1,7 @@
 package com.douban.controller;
 
 import com.douban.entity.SiteMessage;
+import com.douban.dto.PageResult;
 import com.douban.service.NotificationService;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,15 +23,15 @@ public class NotificationController {
     }
 
     @GetMapping
-    public List<SiteMessage> list(@RequestAttribute("userId") Long userId,
-                                  @RequestParam(defaultValue = "1") int page,
-                                  @RequestParam(defaultValue = "20") int size) {
-        return notificationService.list(userId, page, size);
+    public PageResult<SiteMessage> list(@RequestAttribute("userId") Long userId,
+                                        @RequestParam(defaultValue = "1") int page,
+                                        @RequestParam(defaultValue = "20") int size) {
+        return notificationService.listPage(userId, page, size);
     }
 
     @PostMapping("/read")
     public void markRead(@RequestAttribute("userId") Long userId, @RequestBody List<Long> ids) {
         // 用户ID已在拦截器校验，这里仅做消息ID批量已读
-        notificationService.markRead(ids);
+        notificationService.markRead(userId, ids);
     }
 }

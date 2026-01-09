@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MovieService {
@@ -60,7 +61,23 @@ public class MovieService {
     public PageResult<Movie> getByGenre(String genre, int page, int size) {
         int offset = (page - 1) * size;
         List<Movie> movies = movieMapper.findByGenre(genre, size, offset);
-        return new PageResult<>(movies, page, size, movies.size());
+        int total = movieMapper.countByGenre(genre);
+        return new PageResult<>(movies, page, size, total);
+    }
+
+    public PageResult<Movie> getByGenres(List<String> genres, int page, int size) {
+        List<String> cleaned = (genres == null ? List.<String>of() : genres).stream()
+                .filter(s -> s != null && !s.trim().isEmpty())
+                .map(String::trim)
+                .distinct()
+                .collect(Collectors.toList());
+        if (cleaned.isEmpty()) {
+            return getMovies(page, size);
+        }
+        int offset = (page - 1) * size;
+        List<Movie> movies = movieMapper.findByGenresAll(cleaned, size, offset);
+        int total = movieMapper.countByGenresAll(cleaned);
+        return new PageResult<>(movies, page, size, total);
     }
 
     public Movie create(MovieRequest request) {

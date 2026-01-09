@@ -1,5 +1,35 @@
 <script setup>
+import { watch, onMounted, onBeforeUnmount } from 'vue'
 import NavBar from '@/components/NavBar.vue'
+import { useUserStore } from '@/stores/user'
+import { useNotificationStore } from '@/stores/notification'
+
+const userStore = useUserStore()
+const notificationStore = useNotificationStore()
+
+onMounted(() => {
+  const token = userStore.token
+  if (token) {
+    notificationStore.connect(token)
+    notificationStore.loadUnread()
+  }
+})
+
+watch(
+  () => userStore.token,
+  (token) => {
+    if (token) {
+      notificationStore.connect(token)
+      notificationStore.loadUnread()
+    } else {
+      notificationStore.disconnect()
+    }
+  }
+)
+
+onBeforeUnmount(() => {
+  notificationStore.disconnect()
+})
 </script>
 
 <template>

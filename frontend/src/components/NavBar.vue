@@ -2,14 +2,17 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { useNotificationStore } from '@/stores/notification'
 
 const router = useRouter()
 const userStore = useUserStore()
+const notificationStore = useNotificationStore()
 
 const searchQuery = ref('')
 
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 const user = computed(() => userStore.user)
+const unread = computed(() => notificationStore.unreadCount)
 
 function handleSearch() {
   if (searchQuery.value.trim()) {
@@ -46,6 +49,7 @@ function handleCommand(command) {
       >
         <el-menu-item index="/">首页</el-menu-item>
         <el-menu-item index="/movies">电影</el-menu-item>
+        <el-menu-item index="/rankings">排行榜</el-menu-item>
       </el-menu>
 
       <div class="search-box">
@@ -60,6 +64,11 @@ function handleCommand(command) {
 
       <div class="nav-right">
         <template v-if="isLoggedIn">
+          <el-badge :value="unread" class="message-badge" type="danger" v-if="unread">
+            <el-button link @click="router.push('/settings')">
+              <el-icon><Bell /></el-icon>
+            </el-button>
+          </el-badge>
           <el-dropdown trigger="click" @command="handleCommand">
             <div class="user-trigger">
               <el-avatar :size="32" :src="user?.avatar">
@@ -97,10 +106,10 @@ function handleCommand(command) {
 </template>
 
 <script>
-import { Search } from '@element-plus/icons-vue'
+import { Search, Bell } from '@element-plus/icons-vue'
 export default {
   data() {
-    return { Search }
+    return { Search, Bell }
   }
 }
 </script>

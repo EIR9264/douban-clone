@@ -1,10 +1,15 @@
 <script setup>
 import { ref, computed } from 'vue'
+import { normalizePosterUrl } from '@/utils/image'
 
 const props = defineProps({
   movie: {
     type: Object,
     required: true
+  },
+  rank: {
+    type: Number,
+    default: null
   }
 })
 
@@ -20,7 +25,7 @@ const posterUrl = computed(() => {
   if (imgError.value || !props.movie.poster) {
     return ''
   }
-  return props.movie.poster
+  return normalizePosterUrl(props.movie.poster)
 })
 
 function handleImgError() {
@@ -32,6 +37,7 @@ function handleImgError() {
   <router-link :to="`/movie/${movie.id}`" class="movie-card-link">
     <el-card shadow="hover" :body-style="{ padding: '0' }" class="movie-card">
       <div class="poster-wrapper">
+        <div v-if="rank" class="rank-badge">{{ rank }}</div>
         <el-image
           :src="posterUrl"
           :alt="movie.title"
@@ -61,6 +67,10 @@ function handleImgError() {
           <el-tag v-if="ratingDisplay !== '暂无'" type="warning" size="small" effect="plain">
             <el-icon><Star /></el-icon>
             {{ ratingDisplay }}
+          </el-tag>
+          <el-tag v-if="movie.hot" type="success" size="small" effect="plain">
+            <el-icon><TrendCharts /></el-icon>
+            {{ movie.hot }}
           </el-tag>
           <span class="year">{{ movie.year }}</span>
         </div>
@@ -94,6 +104,23 @@ function handleImgError() {
   aspect-ratio: 2/3;
   overflow: hidden;
   background: #f5f5f5;
+}
+
+.rank-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--douban-orange);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 .poster {

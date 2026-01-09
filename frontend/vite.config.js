@@ -14,6 +14,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url))
     },
   },
+  define: {
+    // 为 sockjs-client 等依赖提供 browser 端的 global
+    global: 'window',
+  },
   server: {
     port: 5173,
     proxy: {

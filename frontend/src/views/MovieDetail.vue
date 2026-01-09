@@ -5,6 +5,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
 import { useUserStore } from '@/stores/user'
 import RatingStars from '@/components/RatingStars.vue'
+import { normalizePosterUrl } from '@/utils/image'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,7 +27,7 @@ const posterUrl = computed(() => {
   if (!movie.value?.poster) {
     return ''
   }
-  return movie.value.poster
+  return normalizePosterUrl(movie.value.poster)
 })
 
 async function fetchMovie() {

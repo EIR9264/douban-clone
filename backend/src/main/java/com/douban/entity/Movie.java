@@ -23,4 +23,10 @@ public class Movie {
     private String images;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
+    // 运行时统计字段（排行榜等场景使用，不落库）
+    private Long hot;
+    private Integer reviewCount;
+    private Integer wishCount;
+    private Integer watchedCount;
 }

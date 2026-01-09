@@ -11,6 +11,8 @@ public class UserDTO {
     private String email;
     private String avatar;
     private String bio;
+    private String role;
+    private String status;
     private LocalDateTime createdAt;
 
     public static UserDTO fromEntity(User user) {
@@ -20,6 +22,8 @@ public class UserDTO {
         dto.setEmail(user.getEmail());
         dto.setAvatar(user.getAvatar());
         dto.setBio(user.getBio());
+        dto.setRole(user.getRole());
+        dto.setStatus(user.getStatus());
         dto.setCreatedAt(user.getCreatedAt());
         return dto;
     }

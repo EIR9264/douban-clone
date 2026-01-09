@@ -4,6 +4,8 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(50) NOT NULL UNIQUE,
     email VARCHAR(100) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
+    role VARCHAR(20) NOT NULL DEFAULT 'USER',
+    status VARCHAR(20) NOT NULL DEFAULT 'ACTIVE',
     avatar VARCHAR(500) DEFAULT 'https://img.icons8.com/fluency/96/user-male-circle.png',
     bio VARCHAR(500) DEFAULT '',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -77,4 +79,40 @@ CREATE TABLE IF NOT EXISTS collections (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (movie_id) REFERENCES movies(id) ON DELETE CASCADE,
     INDEX idx_user_status (user_id, status)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- SQL 审计表
+CREATE TABLE IF NOT EXISTS sql_audit (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    user_id BIGINT NULL,
+    client_ip VARCHAR(64) NULL,
+    sql_text TEXT NOT NULL,
+    blocked TINYINT(1) DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_sql_audit_user (user_id),
+    INDEX idx_sql_audit_blocked (blocked)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 公告表
+CREATE TABLE IF NOT EXISTS announcements (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    active TINYINT(1) DEFAULT 1,
+    created_by BIGINT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- 站内信/通知表
+CREATE TABLE IF NOT EXISTS site_messages (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    receiver_id BIGINT NOT NULL,
+    sender_id BIGINT NULL,
+    title VARCHAR(200) NOT NULL,
+    content TEXT NOT NULL,
+    status ENUM('UNREAD', 'READ') DEFAULT 'UNREAD',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+    INDEX idx_receiver_status (receiver_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

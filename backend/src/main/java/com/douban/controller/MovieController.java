@@ -5,6 +5,7 @@ import com.douban.entity.Movie;
 import com.douban.entity.Review;
 import com.douban.service.InteractionService;
 import com.douban.service.MovieService;
+import com.douban.service.RankingService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,9 @@ public class MovieController {
     @Autowired
     private InteractionService interactionService;
 
+    @Autowired
+    private RankingService rankingService;
+
     @GetMapping
     public ResponseEntity<PageResult<Movie>> getMovies(
             @RequestParam(defaultValue = "1") int page,
@@ -35,6 +39,7 @@ public class MovieController {
     public ResponseEntity<?> getMovie(@PathVariable Long id) {
         try {
             Movie movie = movieService.getMovieById(id);
+            rankingService.recordMovieView(id);
             return ResponseEntity.ok(movie);
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
@@ -49,6 +54,26 @@ public class MovieController {
     @GetMapping("/recent")
     public ResponseEntity<List<Movie>> getRecent(@RequestParam(defaultValue = "10") int limit) {
         return ResponseEntity.ok(movieService.getRecent(limit));
+    }
+
+    @GetMapping("/hot")
+    public ResponseEntity<List<Movie>> getHot(@RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(rankingService.getHotMovies(limit));
+    }
+
+    @GetMapping("/most-reviewed")
+    public ResponseEntity<List<Movie>> getMostReviewed(@RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(movieService.getMostReviewed(limit));
+    }
+
+    @GetMapping("/most-wished")
+    public ResponseEntity<List<Movie>> getMostWished(@RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(movieService.getMostWished(limit));
+    }
+
+    @GetMapping("/most-watched")
+    public ResponseEntity<List<Movie>> getMostWatched(@RequestParam(defaultValue = "10") int limit) {
+        return ResponseEntity.ok(movieService.getMostWatched(limit));
     }
 
     @GetMapping("/search")

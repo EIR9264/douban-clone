@@ -1,0 +1,19 @@
+spring:
+  cloud:
+    nacos:
+      server-addr: ${NACOS_SERVER:127.0.0.1:8848}
+      discovery:
+        enabled: true
+        server-addr: ${NACOS_SERVER:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+      config:
+        enabled: true
+        server-addr: ${NACOS_SERVER:127.0.0.1:8848}
+        namespace: ${NACOS_NAMESPACE:}
+        group: ${NACOS_GROUP:DEFAULT_GROUP}
+        file-extension: yaml
+        refresh-enabled: true
+  config:
+    import:
+      - optional:nacos:${spring.application.name}.yaml?refresh=true

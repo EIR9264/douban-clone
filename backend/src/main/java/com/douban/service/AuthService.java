@@ -18,11 +18,9 @@ public class AuthService {
     private JwtUtil jwtUtil;
 
     public AuthResponse register(RegisterRequest request) {
-        // 检查用户名是否已存在
         if (userMapper.countByUsername(request.getUsername()) > 0) {
             throw new RuntimeException("用户名已存在");
         }
-        // 检查邮箱是否已存在
         if (userMapper.countByEmail(request.getEmail()) > 0) {
             throw new RuntimeException("邮箱已被注册");
         }
@@ -31,12 +29,14 @@ public class AuthService {
         user.setUsername(request.getUsername());
         user.setEmail(request.getEmail());
         user.setPasswordHash(PasswordUtil.hashPassword(request.getPassword()));
+        user.setRole("USER");
+        user.setStatus("ACTIVE");
         user.setAvatar("https://img.icons8.com/fluency/96/user-male-circle.png");
         user.setBio("");
 
         userMapper.insert(user);
 
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername());
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
         return new AuthResponse(token, UserDTO.fromEntity(user));
     }
 
@@ -50,11 +50,15 @@ public class AuthService {
             throw new RuntimeException("用户不存在");
         }
 
+        if (!"ACTIVE".equalsIgnoreCase(user.getStatus())) {
+            throw new RuntimeException("账户已停用");
+        }
+
         if (!PasswordUtil.verifyPassword(request.getPassword(), user.getPasswordHash())) {
             throw new RuntimeException("密码错误");
         }
 
-        String token = jwtUtil.generateToken(user.getId(), user.getUsername());
+        String token = jwtUtil.generateToken(user.getId(), user.getUsername(), user.getRole());
         return new AuthResponse(token, UserDTO.fromEntity(user));
     }
 

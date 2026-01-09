@@ -9,6 +9,8 @@ public class User {
     private String username;
     private String email;
     private String passwordHash;
+    private String role;
+    private String status;
     private String avatar;
     private String bio;
     private LocalDateTime createdAt;

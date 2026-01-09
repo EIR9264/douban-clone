@@ -18,4 +18,8 @@ public class Review {
     private String username;
     private String avatar;
     private Integer userRating;
+
+    private String movieTitle;
+    private String moviePoster;
+    private Integer movieYear;
 }

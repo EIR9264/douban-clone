@@ -10,6 +10,17 @@ public interface MovieMapper {
     @Select("SELECT * FROM movies WHERE id = #{id}")
     Movie findById(Long id);
 
+    @Insert("INSERT INTO movies (title, original_title, year, directors, actors, genres, country, language, duration, rating, rating_count, summary, poster, images) " +
+            "VALUES (#{title}, #{originalTitle}, #{year}, #{directors}, #{actors}, #{genres}, #{country}, #{language}, #{duration}, #{rating}, #{ratingCount}, #{summary}, #{poster}, #{images})")
+    @Options(useGeneratedKeys = true, keyProperty = "id")
+    int insert(Movie movie);
+
+    @Update("UPDATE movies SET title = #{title}, original_title = #{originalTitle}, year = #{year}, directors = #{directors}, actors = #{actors}, genres = #{genres}, country = #{country}, language = #{language}, duration = #{duration}, summary = #{summary}, poster = #{poster}, images = #{images} WHERE id = #{id}")
+    int update(Movie movie);
+
+    @Delete("DELETE FROM movies WHERE id = #{id}")
+    int delete(@Param("id") Long id);
+
     @Select("SELECT * FROM movies ORDER BY rating DESC, rating_count DESC LIMIT #{limit} OFFSET #{offset}")
     List<Movie> findAll(@Param("limit") int limit, @Param("offset") int offset);
 
@@ -33,4 +44,44 @@ public interface MovieMapper {
 
     @Update("UPDATE movies SET rating = #{rating}, rating_count = #{ratingCount} WHERE id = #{id}")
     int updateRating(@Param("id") Long id, @Param("rating") java.math.BigDecimal rating, @Param("ratingCount") int ratingCount);
+
+    @Select("SELECT m.*, COALESCE(r.review_count, 0) AS review_count " +
+            "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, COUNT(*) AS review_count FROM reviews GROUP BY movie_id) r " +
+            "ON m.id = r.movie_id " +
+            "ORDER BY COALESCE(review_count, 0) DESC, m.rating DESC, m.rating_count DESC " +
+            "LIMIT #{limit}")
+    List<Movie> findMostReviewed(@Param("limit") int limit);
+
+    @Select("SELECT m.*, COALESCE(c.wish_count, 0) AS wish_count " +
+            "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, COUNT(*) AS wish_count FROM collections WHERE status = 'wish' GROUP BY movie_id) c " +
+            "ON m.id = c.movie_id " +
+            "ORDER BY wish_count DESC, m.rating_count DESC, m.rating DESC " +
+            "LIMIT #{limit}")
+    List<Movie> findMostWished(@Param("limit") int limit);
+
+    @Select("SELECT m.*, COALESCE(c.watched_count, 0) AS watched_count " +
+            "FROM movies m " +
+            "LEFT JOIN (SELECT movie_id, COUNT(*) AS watched_count FROM collections WHERE status = 'watched' GROUP BY movie_id) c " +
+            "ON m.id = c.movie_id " +
+            "ORDER BY watched_count DESC, m.rating_count DESC, m.rating DESC " +
+            "LIMIT #{limit}")
+    List<Movie> findMostWatched(@Param("limit") int limit);
+
+    @Select("""
+            <script>
+            SELECT * FROM movies
+            WHERE id IN
+            <foreach collection="ids" item="id" open="(" separator="," close=")">
+              #{id}
+            </foreach>
+            ORDER BY FIELD(id,
+            <foreach collection="ids" item="id" separator=",">
+              #{id}
+            </foreach>
+            )
+            </script>
+            """)
+    List<Movie> findByIdsOrdered(@Param("ids") List<Long> ids);
 }

@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 
 const routes = [
   {
@@ -10,6 +11,11 @@ const routes = [
     path: '/movies',
     name: 'Movies',
     component: () => import('@/views/Movies.vue')
+  },
+  {
+    path: '/rankings',
+    name: 'Rankings',
+    component: () => import('@/views/Rankings.vue')
   },
   {
     path: '/movie/:id',
@@ -42,6 +48,24 @@ const routes = [
     name: 'Settings',
     component: () => import('@/views/Settings.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/login',
+    name: 'AdminLogin',
+    component: () => import('@/views/admin/AdminLogin.vue')
+  },
+  {
+    path: '/admin',
+    component: () => import('@/views/admin/AdminLayout.vue'),
+    meta: { requiresAdmin: true },
+    children: [
+      { path: 'dashboard', name: 'AdminDashboard', component: () => import('@/views/admin/AdminDashboard.vue') },
+      { path: 'movies', name: 'AdminMovies', component: () => import('@/views/admin/AdminMovies.vue') },
+      { path: 'users', name: 'AdminUsers', component: () => import('@/views/admin/AdminUsers.vue') },
+      { path: 'reviews', name: 'AdminReviews', component: () => import('@/views/admin/AdminReviews.vue') },
+      { path: 'messages', name: 'AdminMessages', component: () => import('@/views/admin/AdminMessages.vue') },
+      { path: 'announcements', name: 'AdminAnnouncements', component: () => import('@/views/admin/AdminAnnouncements.vue') }
+    ]
   }
 ]
 
@@ -54,12 +78,40 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
-  if (to.meta.requiresAuth && !token) {
-    next({ name: 'Login', query: { redirect: to.fullPath } })
-  } else {
+  const userStore = useUserStore()
+  const token = userStore.token || localStorage.getItem('token')
+  const needAuth = to.meta.requiresAuth
+  const needAdmin = to.meta.requiresAdmin
+
+  if (needAdmin) {
+    if (!token) {
+      next({ name: 'AdminLogin', query: { redirect: to.fullPath } })
+      return
+    }
+    // 确保已有用户信息
+    if (!userStore.user) {
+      userStore.fetchUser().finally(() => {
+        if (userStore.user?.role === 'ADMIN') {
+          next()
+        } else {
+          next({ name: 'Login' })
+        }
+      })
+      return
+    }
+    if (userStore.user?.role !== 'ADMIN') {
+      next({ name: 'Login' })
+      return
+    }
     next()
+    return
   }
+
+  if (needAuth && !token) {
+    next({ name: 'Login', query: { redirect: to.fullPath } })
+    return
+  }
+  next()
 })
 
 export default router

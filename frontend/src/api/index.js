@@ -118,7 +118,6 @@ const api = {
   adminToggleAnnouncement: (id, active) => instance.put(`/admin/announcements/${id}/active`, null, { params: { active } }),
   adminDeleteAnnouncement: (id) => instance.delete(`/admin/announcements/${id}`),
   adminSendMessage: (data) => instance.post('/admin/messages', data),
-  adminBroadcastMessage: (data) => instance.post('/admin/messages/broadcast', data),
 }
 
 export default api

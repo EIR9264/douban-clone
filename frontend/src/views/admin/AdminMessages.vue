@@ -45,26 +45,6 @@ const send = async () => {
   }
 }
 
-const broadcast = async () => {
-  try {
-    if (!form.value.title?.trim()) {
-      ElMessage.warning('请填写标题')
-      return
-    }
-    if (!form.value.content?.trim()) {
-      ElMessage.warning('请填写内容')
-      return
-    }
-    await api.adminBroadcastMessage({
-      title: form.value.title,
-      content: form.value.content,
-    })
-    ElMessage.success('已广播')
-  } catch (e) {
-    ElMessage.error(e.message || '广播失败')
-  }
-}
-
 onMounted(() => {
   loadUsers()
 })
@@ -99,7 +79,6 @@ onMounted(() => {
       </el-form-item>
       <el-form-item>
         <el-button type="primary" @click="send">发送</el-button>
-        <el-button type="success" @click="broadcast">广播</el-button>
       </el-form-item>
     </el-form>
   </div>

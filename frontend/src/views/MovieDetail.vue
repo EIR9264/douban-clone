@@ -21,6 +21,7 @@ const showReviewModal = ref(false)
 const reviewTitle = ref('')
 const reviewContent = ref('')
 const submitting = ref(false)
+const showTrailerDialog = ref(false)
 
 const isLoggedIn = computed(() => userStore.isLoggedIn)
 
@@ -58,6 +59,12 @@ function normalizeMediaItem(item) {
 const media = computed(() => parseMovieMedia(movie.value?.images))
 const trailerUrl = computed(() => media.value.trailer?.url || '')
 const stillUrls = computed(() => media.value.stills.map(s => s.url).filter(Boolean))
+const isTrailerVideo = computed(() => /\.(mp4|webm|ogg)(\?.*)?$/i.test(trailerUrl.value))
+
+function openTrailerDialog() {
+  if (!trailerUrl.value) return
+  showTrailerDialog.value = true
+}
 
 async function fetchMovie() {
   loading.value = true
@@ -297,45 +304,61 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Summary section -->
-      <el-card class="summary-section" shadow="never" v-if="movie">
-        <template #header>
-          <span class="section-title">剧情简介</span>
-        </template>
-        <p class="summary">{{ movie.summary || '暂无简介' }}</p>
-      </el-card>
+      <div class="summary-trailer-row" v-if="movie">
+        <el-card class="summary-section" shadow="never">
+          <template #header>
+            <span class="section-title">剧情简介</span>
+          </template>
+          <p class="summary">{{ movie.summary || '暂无简介' }}</p>
+        </el-card>
 
-      <!-- Media section -->
-      <el-card class="summary-section" shadow="never" v-if="movie">
-        <template #header>
-          <span class="section-title">预告片与剧照</span>
-        </template>
+        <el-card class="summary-section" shadow="never">
+          <template #header>
+            <span class="section-title">预告片</span>
+          </template>
 
-        <el-empty
-          v-if="!trailerUrl && stillUrls.length === 0"
-          description="暂无预告片/剧照"
-          :image-size="80"
-        />
+          <el-empty v-if="!trailerUrl" description="暂无预告片" :image-size="80" />
 
-        <div class="media-section" v-if="trailerUrl">
-          <div class="media-title">预告片</div>
-          <video v-if="/\\.(mp4|webm|ogg)(\\?.*)?$/i.test(trailerUrl)" class="trailer" controls :src="trailerUrl" />
-          <el-link v-else :href="trailerUrl" target="_blank" type="primary">打开预告片链接</el-link>
-        </div>
-
-        <div class="media-section" v-if="stillUrls.length > 0">
-          <div class="media-title">剧照</div>
-          <div class="still-grid">
-            <el-image
-              v-for="url in stillUrls"
-              :key="url"
-              :src="url"
-              fit="cover"
-              class="still"
-              :preview-src-list="stillUrls"
-              preview-teleported
-            />
+          <div
+            v-else
+            class="trailer-preview"
+            role="button"
+            tabindex="0"
+            @click="openTrailerDialog"
+            @keydown.enter="openTrailerDialog"
+          >
+            <el-image :src="posterUrl" fit="cover" class="trailer-preview-poster">
+              <template #error>
+                <div class="image-error">
+                  <el-icon><Picture /></el-icon>
+                </div>
+              </template>
+            </el-image>
+            <div class="trailer-preview-overlay">
+              <el-icon class="play-icon"><VideoPlay /></el-icon>
+              <div class="play-text">点击播放</div>
+            </div>
           </div>
+        </el-card>
+      </div>
+
+      <el-card class="summary-section" shadow="never" v-if="movie">
+        <template #header>
+          <span class="section-title">剧照</span>
+        </template>
+
+        <el-empty v-if="stillUrls.length === 0" description="暂无剧照" :image-size="80" />
+
+        <div class="still-grid" v-else>
+          <el-image
+            v-for="url in stillUrls"
+            :key="url"
+            :src="url"
+            fit="cover"
+            class="still"
+            :preview-src-list="stillUrls"
+            preview-teleported
+          />
         </div>
       </el-card>
 
@@ -401,6 +424,34 @@ onMounted(() => {
       </el-card>
 
       <!-- Review dialog -->
+      <el-dialog v-model="showTrailerDialog" title="预告片" width="760px" destroy-on-close class="trailer-dialog">
+        <div class="trailer-dialog-body">
+          <video
+            v-if="isTrailerVideo"
+            class="trailer-player"
+            controls
+            autoplay
+            playsinline
+            :src="trailerUrl"
+          />
+          <iframe
+            v-else
+            class="trailer-iframe"
+            :src="trailerUrl"
+            frameborder="0"
+            allow="autoplay; fullscreen"
+          />
+        </div>
+        <template #footer>
+          <div class="trailer-dialog-footer">
+            <el-link v-if="trailerUrl && !isTrailerVideo" :href="trailerUrl" target="_blank" type="primary">
+              无法内嵌播放？打开链接
+            </el-link>
+            <el-button @click="showTrailerDialog = false">关闭</el-button>
+          </div>
+        </template>
+      </el-dialog>
+
       <el-dialog v-model="showReviewModal" title="写短评" width="500px">
         <el-form>
           <el-form-item label="标题">
@@ -571,6 +622,17 @@ export default {
   flex: 1;
 }
 
+.summary-trailer-row {
+  margin-top: 24px;
+  display: grid;
+  grid-template-columns: 1.35fr 1fr;
+  gap: 18px;
+}
+
+.summary-trailer-row .summary-section {
+  margin-top: 0;
+}
+
 .summary-section,
 .reviews-section {
   margin-top: 24px;
@@ -594,27 +656,86 @@ export default {
   color: var(--text-secondary);
 }
 
-.media-section + .media-section {
-  margin-top: 18px;
+.trailer-preview {
+  position: relative;
+  height: 220px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+  cursor: pointer;
+  border: 1px solid var(--separator);
 }
 
-.media-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 10px;
+.trailer-preview:focus-visible {
+  outline: 2px solid var(--el-color-primary);
+  outline-offset: 2px;
 }
 
-.trailer {
+.trailer-preview-poster {
   width: 100%;
-  max-height: 420px;
+  height: 100%;
+}
+
+.trailer-preview-poster :deep(img) {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trailer-preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.6));
+  color: #fff;
+}
+
+.trailer-preview-overlay .play-icon {
+  font-size: 34px;
+}
+
+.play-text {
+  font-size: 13px;
+  opacity: 0.92;
+}
+
+.trailer-dialog-body {
+  width: 100%;
+}
+
+.trailer-player,
+.trailer-iframe {
+  width: 100%;
+  height: 420px;
   border-radius: 12px;
   background: #000;
+}
+
+.trailer-dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .still-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 10px;
+}
+
+@media (max-width: 860px) {
+  .summary-trailer-row {
+    grid-template-columns: 1fr;
+  }
+
+  .trailer-player,
+  .trailer-iframe {
+    height: 260px;
+  }
 }
 
 .still {

@@ -32,6 +32,7 @@ public class WebConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         "/api/auth/**",
                         "/api/movies/**",
+                        "/api/reviews/**",
                         "/api/home/**",
                         "/api/ws/**",
                         "/api/announcements/**"
@@ -41,7 +42,7 @@ public class WebConfig implements WebMvcConfigurer {
         AuthInterceptor optionalAuthInterceptor = new AuthInterceptor(false);
         optionalAuthInterceptor.setJwtUtil(jwtUtil);
         registry.addInterceptor(optionalAuthInterceptor)
-                .addPathPatterns("/api/movies/**");
+                .addPathPatterns("/api/movies/**", "/api/reviews/**");
 
         // 账号状态：封禁/停用用户禁止执行需要登录的操作（仍允许 GET /api/movies/** 浏览公开内容）
         registry.addInterceptor(userStatusInterceptor)
@@ -53,4 +54,3 @@ public class WebConfig implements WebMvcConfigurer {
                 .addPathPatterns("/api/admin/**");
     }
 }
-

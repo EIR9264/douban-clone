@@ -31,9 +31,10 @@ public class UserStatusInterceptor implements HandlerInterceptor {
             return true;
         }
 
-        // 允许被封禁用户访问公开的电影浏览（GET），避免因为本地 token 而无法浏览公开内容
+        // 允许被封禁用户访问公开的浏览内容（GET），避免因为本地 token 而无法浏览公开内容
         String uri = request.getRequestURI();
-        if (uri != null && uri.startsWith("/api/movies") && "GET".equalsIgnoreCase(request.getMethod())) {
+        if (uri != null && "GET".equalsIgnoreCase(request.getMethod())
+                && (uri.startsWith("/api/movies") || uri.startsWith("/api/reviews"))) {
             return true;
         }
 
@@ -43,4 +44,3 @@ public class UserStatusInterceptor implements HandlerInterceptor {
         return false;
     }
 }
-

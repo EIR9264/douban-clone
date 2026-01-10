@@ -198,7 +198,7 @@ onMounted(async () => {
                         </el-tag>
                         <el-tag size="small" type="warning" effect="plain" class="likes">
                           <el-icon><Pointer /></el-icon>
-                          {{ review.likes || 0 }}
+                          {{ review.likeCount || 0 }}
                         </el-tag>
                       </div>
                       <div class="review-content">
@@ -376,8 +376,24 @@ onMounted(async () => {
   font-weight: 500;
 }
 
+.likes,
+.user-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.likes :deep(.el-tag__content),
+.user-rating :deep(.el-tag__content) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
 .likes :deep(.el-icon) {
-  margin-right: 2px;
+  margin-right: 0;
 }
 
 .user-rating {

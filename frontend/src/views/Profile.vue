@@ -97,48 +97,34 @@ onMounted(() => {
           </el-tabs>
         </template>
 
-        <!-- 电影列表 -->
-        <div class="movie-grid" v-if="!loading && collections.length > 0">
-          <MovieCard
-            v-for="item in collections"
-            :key="item.id"
-            :movie="item.movie"
-          />
-        </div>
+        <transition name="fade" mode="out-in">
+          <div :key="activeTab" class="collection-body">
+            <div class="movie-grid-wrapper" v-loading="loading">
+              <transition-group v-if="collections.length > 0" name="list" tag="div" class="movie-grid">
+                <MovieCard v-for="item in collections" :key="item.id" :movie="item.movie" />
+              </transition-group>
 
-        <div class="movie-grid" v-else-if="loading">
-          <el-card v-for="i in 10" :key="i" class="skeleton-card" shadow="never">
-            <el-skeleton animated>
-              <template #template>
-                <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px" />
-                <el-skeleton-item variant="h3" style="width: 80%; margin-top: 12px" />
-                <el-skeleton-item variant="text" style="width: 50%; margin-top: 8px" />
-              </template>
-            </el-skeleton>
-          </el-card>
-        </div>
+              <el-empty
+                v-if="!loading && collections.length === 0"
+                :description="`还没有${activeTab === 'wish' ? '想看' : activeTab === 'watching' ? '在看' : '看过'}的电影`"
+                :image-size="120"
+              >
+                <el-button type="primary" @click="router.push('/movies')">去发现电影</el-button>
+              </el-empty>
+            </div>
 
-        <el-empty
-          v-else
-          :description="`还没有${activeTab === 'wish' ? '想看' : activeTab === 'watching' ? '在看' : '看过'}的电影`"
-          :image-size="120"
-        >
-          <el-button type="primary" @click="router.push('/movies')">
-            去发现电影
-          </el-button>
-        </el-empty>
-
-        <!-- 分页 -->
-        <div class="pagination-wrapper" v-if="total > pageSize && !loading">
-          <el-pagination
-            v-model:current-page="page"
-            :page-size="pageSize"
-            :total="total"
-            layout="prev, pager, next"
-            background
-            @current-change="handlePageChange"
-          />
-        </div>
+            <div class="pagination-wrapper" v-if="total > pageSize && !loading">
+              <el-pagination
+                v-model:current-page="page"
+                :page-size="pageSize"
+                :total="total"
+                layout="prev, pager, next"
+                background
+                @current-change="handlePageChange"
+              />
+            </div>
+          </div>
+        </transition>
       </el-card>
     </div>
   </div>
@@ -227,6 +213,10 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
   gap: 20px;
+}
+
+.movie-grid-wrapper {
+  min-height: 240px;
 }
 
 .skeleton-card {

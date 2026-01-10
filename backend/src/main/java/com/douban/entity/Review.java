@@ -10,7 +10,7 @@ public class Review {
     private Long movieId;
     private String title;
     private String content;
-    private Integer likes;
+    private Integer likeCount;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -18,6 +18,9 @@ public class Review {
     private String username;
     private String avatar;
     private Integer userRating;
+
+    // 当前登录用户是否点过赞（可为空）
+    private Boolean liked;
 
     private String movieTitle;
     private String moviePoster;

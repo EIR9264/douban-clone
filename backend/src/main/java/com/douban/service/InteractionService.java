@@ -8,6 +8,7 @@ import com.douban.mapper.CollectionMapper;
 import com.douban.mapper.MovieMapper;
 import com.douban.mapper.RatingMapper;
 import com.douban.mapper.ReviewMapper;
+import com.douban.mapper.ReviewLikeMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,6 +27,9 @@ public class InteractionService {
 
     @Autowired
     private ReviewMapper reviewMapper;
+
+    @Autowired
+    private ReviewLikeMapper reviewLikeMapper;
 
     @Autowired
     private CollectionMapper collectionMapper;
@@ -74,9 +78,9 @@ public class InteractionService {
     }
 
     // 评论相关
-    public PageResult<Review> getMovieReviews(Long movieId, int page, int size) {
+    public PageResult<Review> getMovieReviews(Long movieId, Long viewerId, int page, int size) {
         int offset = (page - 1) * size;
-        List<Review> reviews = reviewMapper.findByMovie(movieId, size, offset);
+        List<Review> reviews = reviewMapper.findByMovie(movieId, viewerId, size, offset);
         int total = reviewMapper.countByMovie(movieId);
         return new PageResult<>(reviews, page, size, total);
     }
@@ -88,7 +92,7 @@ public class InteractionService {
         review.setTitle(title);
         review.setContent(content);
         reviewMapper.insert(review);
-        return reviewMapper.findById(review.getId());
+        return reviewMapper.findById(review.getId(), userId);
     }
 
     public void deleteReview(Long reviewId, Long userId) {
@@ -98,8 +102,20 @@ public class InteractionService {
         }
     }
 
-    public void likeReview(Long reviewId) {
-        reviewMapper.incrementLikes(reviewId);
+    @Transactional
+    public Review toggleReviewLike(Long userId, Long reviewId) {
+        Review existing = reviewMapper.findById(reviewId, userId);
+        if (existing == null) {
+            throw new RuntimeException("评论不存在");
+        }
+
+        boolean liked = reviewLikeMapper.exists(userId, reviewId) > 0;
+        if (liked) {
+            reviewLikeMapper.delete(userId, reviewId);
+        } else {
+            reviewLikeMapper.insert(userId, reviewId);
+        }
+        return reviewMapper.findById(reviewId, userId);
     }
 
     // 收藏相关

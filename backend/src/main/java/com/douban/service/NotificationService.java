@@ -6,6 +6,7 @@ import com.douban.mapper.SiteMessageMapper;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,12 +21,22 @@ public class NotificationService {
     }
 
     public SiteMessage sendToUser(Long receiverId, Long senderId, String title, String content) {
+        if (receiverId == null) {
+            throw new IllegalArgumentException("receiverId不能为空");
+        }
+        if (title == null || title.isBlank()) {
+            throw new IllegalArgumentException("标题不能为空");
+        }
+        if (content == null || content.isBlank()) {
+            throw new IllegalArgumentException("内容不能为空");
+        }
         SiteMessage message = new SiteMessage();
         message.setReceiverId(receiverId);
         message.setSenderId(senderId);
         message.setTitle(title);
         message.setContent(content);
         message.setStatus("UNREAD");
+        message.setCreatedAt(LocalDateTime.now());
 
         siteMessageMapper.insert(message);
         messagingTemplate.convertAndSendToUser(receiverId.toString(), "/queue/notice", message);

@@ -8,8 +8,8 @@ export const useUserStore = defineStore('user', () => {
 
   const isLoggedIn = computed(() => !!token.value)
 
-  async function login(username, password) {
-    const res = await api.login({ username, password })
+  async function login(username, password, captchaId, captchaCode) {
+    const res = await api.login({ username, password, captchaId, captchaCode })
     token.value = res.token
     user.value = res.user
     localStorage.setItem('token', res.token)

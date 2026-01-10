@@ -12,10 +12,34 @@ const user = computed(() => userStore.user)
 const formRef = ref()
 const loading = ref(false)
 
+const pwdFormRef = ref()
+const pwdLoading = ref(false)
+const pwdForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+
 const form = ref({
   username: '',
-  bio: ''
+  bio: '',
+  avatar: ''
 })
+
+async function uploadAvatar({ file, onSuccess, onError }) {
+  try {
+    const res = await api.uploadMyAvatar(file)
+    const updated = res.user || res
+    const url = res.url || updated?.avatar
+    if (url) form.value.avatar = url
+    if (updated?.id) userStore.user = updated
+    ElMessage.success('头像已更新')
+    onSuccess?.(res)
+  } catch (e) {
+    ElMessage.error(e.message || '上传失败')
+    onError?.(e)
+  }
+}
 
 const rules = {
   username: [
@@ -24,10 +48,29 @@ const rules = {
   ]
 }
 
+const pwdRules = {
+  oldPassword: [{ required: true, message: '请输入旧密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '新密码至少6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请再次输入新密码', trigger: 'blur' },
+    {
+      validator: (rule, value, callback) => {
+        if (value !== pwdForm.value.newPassword) callback(new Error('两次密码不一致'))
+        else callback()
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
 onMounted(() => {
   if (user.value) {
     form.value.username = user.value.username || ''
     form.value.bio = user.value.bio || ''
+    form.value.avatar = user.value.avatar || ''
   }
 })
 
@@ -41,7 +84,8 @@ async function updateProfile() {
     try {
       const updated = await api.updateUser({
         username: form.value.username,
-        bio: form.value.bio
+        bio: form.value.bio,
+        avatar: form.value.avatar
       })
       userStore.user = updated
       ElMessage.success('个人信息更新成功')
@@ -66,6 +110,30 @@ async function logout() {
   } catch {
     // 取消操作
   }
+}
+
+async function changePassword() {
+  if (!pwdFormRef.value) return
+  await pwdFormRef.value.validate(async (valid) => {
+    if (!valid) return
+    pwdLoading.value = true
+    try {
+      await api.changePassword({
+        oldPassword: pwdForm.value.oldPassword,
+        newPassword: pwdForm.value.newPassword
+      })
+      ElMessage.success('密码已修改，请重新登录')
+      userStore.logout()
+      router.push('/login')
+    } catch (e) {
+      ElMessage.error(e.message)
+    } finally {
+      pwdLoading.value = false
+      pwdForm.value.oldPassword = ''
+      pwdForm.value.newPassword = ''
+      pwdForm.value.confirmPassword = ''
+    }
+  })
 }
 </script>
 
@@ -93,11 +161,27 @@ async function logout() {
         >
           <el-form-item label="头像">
             <div class="avatar-section">
-              <el-avatar :size="80" :src="user?.avatar">
+              <el-avatar :size="80" :src="form.avatar || user?.avatar">
                 <el-icon :size="32"><User /></el-icon>
               </el-avatar>
-              <span class="avatar-hint">暂不支持修改头像</span>
+              <div class="avatar-input">
+                <el-input
+                  v-model="form.avatar"
+                  placeholder="请输入头像图片链接（URL）"
+                  size="large"
+                />
+                <div class="avatar-actions">
+                  <el-upload
+                    :show-file-list="false"
+                    accept="image/*"
+                    :http-request="uploadAvatar"
+                  >
+                    <el-button size="large">本地上传</el-button>
+                  </el-upload>
+                </div>
+              </div>
             </div>
+            <div class="avatar-hint">支持粘贴图片 URL 或本地上传（上传会自动保存）</div>
           </el-form-item>
 
           <el-form-item label="用户名" prop="username">
@@ -139,6 +223,32 @@ async function logout() {
               @click="updateProfile"
             >
               {{ loading ? '保存中...' : '保存修改' }}
+            </el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+
+      <el-card class="settings-card" shadow="never">
+        <template #header>
+          <div class="card-header">
+            <el-icon><Lock /></el-icon>
+            修改密码
+          </div>
+        </template>
+
+        <el-form ref="pwdFormRef" :model="pwdForm" :rules="pwdRules" label-position="top">
+          <el-form-item label="旧密码" prop="oldPassword">
+            <el-input v-model="pwdForm.oldPassword" type="password" show-password size="large" />
+          </el-form-item>
+          <el-form-item label="新密码" prop="newPassword">
+            <el-input v-model="pwdForm.newPassword" type="password" show-password size="large" />
+          </el-form-item>
+          <el-form-item label="确认新密码" prop="confirmPassword">
+            <el-input v-model="pwdForm.confirmPassword" type="password" show-password size="large" />
+          </el-form-item>
+          <el-form-item>
+            <el-button type="primary" size="large" :loading="pwdLoading" @click="changePassword">
+              {{ pwdLoading ? '提交中...' : '确认修改' }}
             </el-button>
           </el-form-item>
         </el-form>
@@ -220,9 +330,22 @@ export default {
   gap: 16px;
 }
 
+.avatar-input {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.avatar-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .avatar-hint {
   font-size: 13px;
   color: var(--text-muted);
+  margin-top: 8px;
 }
 
 .field-hint {

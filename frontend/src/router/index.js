@@ -74,6 +74,11 @@ const routes = [
       { path: 'messages', name: 'AdminMessages', component: () => import('@/views/admin/AdminMessages.vue') },
       { path: 'announcements', name: 'AdminAnnouncements', component: () => import('@/views/admin/AdminAnnouncements.vue') }
     ]
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'NotFound',
+    component: () => import('@/views/NotFound.vue')
   }
 ]
 
@@ -85,7 +90,7 @@ const router = createRouter({
   }
 })
 
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to) => {
   const userStore = useUserStore()
   const token = userStore.token || localStorage.getItem('token')
   const needAuth = to.meta.requiresAuth
@@ -93,33 +98,27 @@ router.beforeEach((to, from, next) => {
 
   if (needAdmin) {
     if (!token) {
-      next({ name: 'AdminLogin', query: { redirect: to.fullPath } })
-      return
+      return { name: 'AdminLogin', query: { redirect: to.fullPath } }
     }
-    // 确保已有用户信息
     if (!userStore.user) {
-      userStore.fetchUser().finally(() => {
-        if (userStore.user?.role === 'ADMIN') {
-          next()
-        } else {
-          next({ name: 'AdminLogin' })
-        }
-      })
-      return
+      await userStore.fetchUser()
     }
     if (userStore.user?.role !== 'ADMIN') {
-      next({ name: 'AdminLogin' })
-      return
+      return { name: 'AdminLogin' }
     }
-    next()
-    return
+    return true
   }
 
-  if (needAuth && !token) {
-    next({ name: 'Login', query: { redirect: to.fullPath } })
-    return
+  if (needAuth) {
+    if (!token) {
+      return { name: 'Login', query: { redirect: to.fullPath } }
+    }
+    if (!userStore.user) {
+      await userStore.fetchUser()
+    }
   }
-  next()
+
+  return true
 })
 
 export default router

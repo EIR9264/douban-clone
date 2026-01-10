@@ -8,7 +8,7 @@ import java.util.List;
 @Mapper
 public interface SiteMessageMapper {
 
-    @Insert("INSERT INTO site_messages (receiver_id, sender_id, title, content, status) VALUES (#{receiverId}, #{senderId}, #{title}, #{content}, #{status})")
+    @Insert("INSERT INTO site_messages (receiver_id, sender_id, title, content, status, created_at) VALUES (#{receiverId}, #{senderId}, #{title}, #{content}, #{status}, #{createdAt})")
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(SiteMessage message);
 

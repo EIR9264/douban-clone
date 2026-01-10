@@ -21,7 +21,7 @@ instance.interceptors.request.use(
 instance.interceptors.response.use(
   (response) => response.data,
   (error) => {
-    const message = error.response?.data?.error || '请求失败'
+    const message = error.response?.data?.error || error.message || '请求失败'
     return Promise.reject(new Error(message))
   }
 )
@@ -30,8 +30,15 @@ const api = {
   // 认证
   login: (data) => instance.post('/auth/login', data),
   register: (data) => instance.post('/auth/register', data),
+  getCaptcha: () => instance.get('/auth/captcha'),
   getCurrentUser: () => instance.get('/users/me'),
   updateUser: (data) => instance.put('/users/me', data),
+  changePassword: (data) => instance.put('/users/me/password', data),
+  uploadMyAvatar: (file) => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return instance.post('/users/me/avatar', fd, { timeout: 120000 })
+  },
 
   // 通知
   listUnreadNotifications: () => instance.get('/notifications/unread'),
@@ -79,11 +86,22 @@ const api = {
   adminCreateMovie: (data) => instance.post('/admin/movies', data),
   adminUpdateMovie: (id, data) => instance.put(`/admin/movies/${id}`, data),
   adminDeleteMovie: (id) => instance.delete(`/admin/movies/${id}`),
+  adminUploadFile: (file, prefix = '') => {
+    const fd = new FormData()
+    fd.append('file', file)
+    return instance.post('/admin/uploads', fd, {
+      params: { prefix },
+      // 上传时让浏览器/axios自动设置 multipart boundary
+      timeout: 120000,
+    })
+  },
+  adminDeleteUpload: (objectKey) => instance.delete('/admin/uploads', { params: { objectKey } }),
 
   // 管理员 - 用户
   adminListUsers: (page = 1, size = 20) => instance.get('/admin/users', { params: { page, size } }),
   adminUpdateUserRole: (id, role) => instance.put(`/admin/users/${id}/role`, { role }),
   adminUpdateUserStatus: (id, status) => instance.put(`/admin/users/${id}/status`, { status }),
+  adminUpdateUser: (id, data) => instance.put(`/admin/users/${id}`, data),
 
   // 管理员 - 评论
   adminListReviews: (page = 1, size = 20) => instance.get('/admin/reviews', { params: { page, size } }),

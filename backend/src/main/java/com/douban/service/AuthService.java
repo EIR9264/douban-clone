@@ -92,4 +92,21 @@ public class AuthService {
         userMapper.update(user);
         return UserDTO.fromEntity(user);
     }
+
+    public void changePassword(Long userId, String oldPassword, String newPassword) {
+        User user = userMapper.findById(userId);
+        if (user == null) {
+            throw new RuntimeException("用户不存在");
+        }
+        if (oldPassword == null || oldPassword.isBlank()) {
+            throw new RuntimeException("旧密码不能为空");
+        }
+        if (newPassword == null || newPassword.length() < 6) {
+            throw new RuntimeException("新密码至少6位");
+        }
+        if (!PasswordUtil.verifyPassword(oldPassword, user.getPasswordHash())) {
+            throw new RuntimeException("旧密码不正确");
+        }
+        userMapper.updatePasswordHash(userId, PasswordUtil.hashPassword(newPassword));
+    }
 }

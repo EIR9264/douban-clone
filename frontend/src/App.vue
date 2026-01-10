@@ -1,11 +1,17 @@
 <script setup>
-import { watch, onMounted, onBeforeUnmount } from 'vue'
+import { watch, onMounted, onBeforeUnmount, computed } from 'vue'
 import NavBar from '@/components/NavBar.vue'
 import { useUserStore } from '@/stores/user'
 import { useNotificationStore } from '@/stores/notification'
+import { useRoute } from 'vue-router'
 
 const userStore = useUserStore()
 const notificationStore = useNotificationStore()
+const route = useRoute()
+
+const isAdminRoute = computed(() => route.matched?.some((r) => r.path === '/admin'))
+const viewKey = computed(() => (isAdminRoute.value ? '/admin' : route.fullPath))
+const transitionName = computed(() => (isAdminRoute.value ? 'fade' : 'page'))
 
 onMounted(() => {
   const token = userStore.token
@@ -37,8 +43,8 @@ onBeforeUnmount(() => {
     <NavBar />
     <main class="main-content">
       <router-view v-slot="{ Component }">
-        <transition name="page" mode="out-in">
-          <component :is="Component" :key="$route.fullPath" />
+        <transition :name="transitionName" mode="out-in">
+          <component :is="Component" :key="viewKey" />
         </transition>
       </router-view>
     </main>

@@ -1,5 +1,6 @@
 <script setup>
-import { RouterView } from 'vue-router'
+import { RouterView, useRoute } from 'vue-router'
+import { computed } from 'vue'
 import { useUserStore } from '@/stores/user'
 
 const menuItems = [
@@ -13,6 +14,8 @@ const menuItems = [
 ]
 
 const userStore = useUserStore()
+const route = useRoute()
+const viewKey = computed(() => route.name || route.path)
 </script>
 
 <template>
@@ -31,8 +34,8 @@ const userStore = useUserStore()
     </aside>
     <section class="content">
       <RouterView v-slot="{ Component }">
-        <transition name="page" mode="out-in">
-          <component :is="Component" :key="$route.fullPath" />
+        <transition name="fade">
+          <component :is="Component" :key="viewKey" />
         </transition>
       </RouterView>
     </section>
@@ -53,10 +56,11 @@ const userStore = useUserStore()
   flex-direction: column;
   border-right: 1px solid var(--separator);
   backdrop-filter: blur(12px);
-  position: sticky;
+  position: fixed;
   top: 64px;
-  height: calc(100vh - 64px);
-  overflow: auto;
+  left: 0;
+  bottom: 0;
+  overflow: hidden;
 }
 .brand {
   padding: 18px 16px 12px;
@@ -69,9 +73,11 @@ const userStore = useUserStore()
   border-right: none;
   background: transparent;
   padding: 6px 10px;
+  overflow: auto;
+  flex: 1 1 auto;
 }
 .user {
-  margin-top: auto;
+  flex: 0 0 auto;
   padding: 12px 16px 16px;
   font-size: 12px;
   border-top: 1px solid var(--separator);
@@ -80,6 +86,7 @@ const userStore = useUserStore()
 .content {
   flex: 1;
   padding: 16px 16px 28px;
+  margin-left: 240px;
 }
 
 .menu :deep(.el-menu-item) {
@@ -98,5 +105,29 @@ const userStore = useUserStore()
   color: var(--douban-green);
   background: rgba(52, 199, 89, 0.14);
   font-weight: 600;
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    top: auto;
+    left: auto;
+    bottom: auto;
+    overflow: visible;
+  }
+
+  .menu {
+    overflow: visible;
+  }
+
+  .content {
+    margin-left: 0;
+  }
+
+  .admin-layout {
+    flex-direction: column;
+  }
 }
 </style>

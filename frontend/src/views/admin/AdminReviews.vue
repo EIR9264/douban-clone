@@ -58,7 +58,7 @@ onMounted(fetchReviews)
         </template>
       </el-table-column>
       <el-table-column prop="title" label="标题" min-width="160" />
-      <el-table-column prop="likes" label="点赞" width="90" />
+      <el-table-column prop="likeCount" label="点赞" width="90" />
       <el-table-column prop="createdAt" label="创建时间" width="180">
         <template #default="{ row }">
           {{ row.createdAt ? new Date(row.createdAt).toLocaleString() : '-' }}
@@ -83,4 +83,3 @@ onMounted(fetchReviews)
     </div>
   </div>
 </template>
-

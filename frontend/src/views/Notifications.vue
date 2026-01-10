@@ -2,9 +2,12 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useNotificationStore } from '@/stores/notification'
+import { useUserStore } from '@/stores/user'
 import api from '@/api'
 
 const notificationStore = useNotificationStore()
+const userStore = useUserStore()
+const isLoggedIn = computed(() => userStore.isLoggedIn)
 
 const activeTab = ref('messages')
 
@@ -20,6 +23,7 @@ const loadingAnnouncements = ref(false)
 const announcements = ref([])
 
 async function loadMessages(reset = false) {
+  if (!isLoggedIn.value) return
   loadingMessages.value = true
   try {
     if (reset) page.value = 1
@@ -45,6 +49,7 @@ async function loadAnnouncements() {
 }
 
 async function markAllRead() {
+  if (!isLoggedIn.value) return
   if (unreadIds.value.length === 0) return
   try {
     await api.markNotificationsRead(unreadIds.value)
@@ -56,6 +61,7 @@ async function markAllRead() {
 }
 
 async function markOneRead(message) {
+  if (!isLoggedIn.value) return
   if (!message?.id || message.status !== 'UNREAD') return
   try {
     await api.markNotificationsRead([message.id])
@@ -72,7 +78,11 @@ function handlePageChange(p) {
 }
 
 onMounted(async () => {
-  await Promise.all([notificationStore.loadUnread(), loadMessages(true), loadAnnouncements()])
+  const tasks = [loadAnnouncements()]
+  if (isLoggedIn.value) {
+    tasks.push(notificationStore.loadUnread(), loadMessages(true))
+  }
+  await Promise.all(tasks)
 })
 </script>
 
@@ -92,7 +102,11 @@ onMounted(async () => {
       <el-tabs v-model="activeTab">
         <el-tab-pane label="站内信" name="messages">
           <div v-loading="loadingMessages">
-            <el-empty v-if="!loadingMessages && items.length === 0" description="暂无站内信" :image-size="120" />
+            <el-empty v-if="!isLoggedIn" description="登录后可查看站内信" :image-size="120">
+              <el-button type="primary" @click="$router.push('/login?redirect=/notifications')">去登录</el-button>
+            </el-empty>
+
+            <el-empty v-else-if="!loadingMessages && items.length === 0" description="暂无站内信" :image-size="120" />
 
             <div class="msg-list" v-else>
               <el-card v-for="m in items" :key="m.id" class="msg-card" shadow="never" @click="markOneRead(m)">
@@ -209,4 +223,3 @@ onMounted(async () => {
   margin-top: 18px;
 }
 </style>
-

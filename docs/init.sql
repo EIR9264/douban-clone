@@ -65,13 +65,23 @@ CREATE TABLE IF NOT EXISTS reviews (
     movie_id BIGINT NOT NULL,
     title VARCHAR(200),
     content TEXT NOT NULL,
-    likes INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
     FOREIGN KEY (movie_id) REFERENCES movies (id) ON DELETE CASCADE,
     INDEX idx_movie_id (movie_id),
     INDEX idx_user_id (user_id)
+);
+
+-- 评论点赞表（用户对评论的点赞状态）
+CREATE TABLE IF NOT EXISTS review_likes (
+    user_id BIGINT NOT NULL,
+    review_id BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, review_id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (review_id) REFERENCES reviews (id) ON DELETE CASCADE,
+    INDEX idx_review_likes_review (review_id)
 );
 
 -- 收藏表
@@ -690,92 +700,79 @@ INSERT INTO
         user_id,
         movie_id,
         title,
-        content,
-        likes
+        content
     )
 VALUES (
         2,
         1,
         '永远的经典',
-        '剧情和表演都无可挑剔，百看不厌。',
-        3
+        '剧情和表演都无可挑剔，百看不厌。'
     ),
     (
         3,
         4,
         '梦境的建筑学',
-        '诺兰用严谨的逻辑构建了一个多层梦境。不仅是视觉奇观，更是对潜意识的深刻探索。',
-        45
+        '诺兰用严谨的逻辑构建了一个多层梦境。不仅是视觉奇观，更是对潜意识的深刻探索。'
     ),
     (
         4,
         5,
         '被名字束缚的人生',
-        '宫崎骏用最绚烂的画面讲了一个最悲伤也最温暖的故事：不要忘记自己的名字。',
-        32
+        '宫崎骏用最绚烂的画面讲了一个最悲伤也最温暖的故事：不要忘记自己的名字。'
     ),
     (
         5,
         7,
         '爱是唯一跨越时空的维度',
-        '物理学让这部电影有了骨架，而父女情让它有了灵魂。',
-        88
+        '物理学让这部电影有了骨架，而父女情让它有了灵魂。'
     ),
     (
         3,
         8,
         '地下室的阳光',
-        '阶级的鸿沟不是靠几张伪造的学历就能填平的，气味才是最诚实的标签。',
-        21
+        '阶级的鸿沟不是靠几张伪造的学历就能填平的，气味才是最诚实的标签。'
     ),
     (
         6,
         9,
         '无法超越的男人的圣经',
-        '这不是一部简单的黑帮片，这是关于生活、责任和克制的哲学课。',
-        156
+        '这不是一部简单的黑帮片，这是关于生活、责任和克制的哲学课。'
     ),
     (
         15,
         17,
         '鹅城岁月的隐喻',
-        '姜文把所有的政治隐喻都藏在了狂欢式的台词里，每看一遍都有新发现。',
-        289
+        '姜文把所有的政治隐喻都藏在了狂欢式的台词里，每看一遍都有新发现。'
     ),
     (
         13,
         11,
         '纸巾准备好了吗',
-        '小时候看的是特效，长大了看的是在那场灾难面前，人性能迸发出怎样的光。',
-        420
+        '小时候看的是特效，长大了看的是在那场灾难面前，人性能迸发出怎样的光。'
     ),
     (
         11,
         16,
         '陆地对我来说是一艘太大的船',
-        '1900拒绝下船的那一刻，他守护的是自己的纯粹，而我们都成了陆地的囚徒。',
-        198
+        '1900拒绝下船的那一刻，他守护的是自己的纯粹，而我们都成了陆地的囚徒。'
     ),
     (
         8,
         13,
         '中国科幻的黄金时代开启了',
-        '不论是数字生命还是移山计划，都展现了中国科幻独有的家国情怀。',
-        350
+        '不论是数字生命还是移山计划，都展现了中国科幻独有的家国情怀。'
     ),
     (
         12,
         20,
         '妈的多元宇宙',
-        '疯狂的外壳下包裹着一个最核心的主题：母女的和解，以及在虚无中拥抱平庸。',
-        88
+        '疯狂的外壳下包裹着一个最核心的主题：母女的和解，以及在虚无中拥抱平庸。'
     ),
     (
         14,
         14,
         '笑中带泪的极致',
-        '小时候看笑了，长大了看哭了。至尊宝转身的那一刻，就是成长的代价。',
-        510
+        '小时候看笑了，长大了看哭了。至尊宝转身的那一刻，就是成长的代价。'
     );
 
 -- 示例公告与站内信

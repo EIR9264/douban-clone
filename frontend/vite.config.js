@@ -24,6 +24,10 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        ws: true,
+        // 上传文件时避免代理连接被提前中断
+        timeout: 120000,
+        proxyTimeout: 120000,
       }
     }
   }

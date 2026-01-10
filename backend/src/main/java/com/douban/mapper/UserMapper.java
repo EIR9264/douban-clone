@@ -37,9 +37,15 @@ public interface UserMapper {
     @Update("UPDATE users SET status = #{status} WHERE id = #{id}")
     int updateStatus(@Param("id") Long id, @Param("status") String status);
 
-    @Select("SELECT * FROM users ORDER BY created_at DESC LIMIT #{limit} OFFSET #{offset}")
+    @Update("UPDATE users SET password_hash = #{passwordHash} WHERE id = #{id}")
+    int updatePasswordHash(@Param("id") Long id, @Param("passwordHash") String passwordHash);
+
+    @Select("SELECT * FROM users ORDER BY id DESC LIMIT #{limit} OFFSET #{offset}")
     java.util.List<User> findAll(@Param("limit") int limit, @Param("offset") int offset);
 
     @Select("SELECT COUNT(*) FROM users")
     int countAll();
+
+    @Select("SELECT COUNT(*) FROM users WHERE role = #{role}")
+    int countByRole(@Param("role") String role);
 }

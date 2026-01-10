@@ -1,11 +1,18 @@
 server:
   port: 8080
+  tomcat:
+    max-swallow-size: -1
+    max-http-form-post-size: 200MB
 
 spring:
   application:
     name: douban-movie
   profiles:
     default: dev,nacos
+  servlet:
+    multipart:
+      max-file-size: 200MB
+      max-request-size: 200MB
   datasource:
     url: jdbc:mysql://localhost:3306/douban?useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&characterEncoding=UTF-8
     username: root
@@ -48,3 +55,11 @@ logging:
     com.douban: DEBUG
     org.mybatis: INFO
     com.alibaba.nacos: WARN
+
+minio:
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+  public-endpoint: ${MINIO_PUBLIC_ENDPOINT:http://localhost:9000}
+  access-key: ${MINIO_ACCESS_KEY:admin}
+  secret-key: ${MINIO_SECRET_KEY:admin123456}
+  bucket: ${MINIO_BUCKET:douban}
+  public-read: true

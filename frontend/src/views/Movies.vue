@@ -102,19 +102,21 @@ onMounted(() => {
       </el-card>
 
       <!-- 电影列表 -->
-      <transition-group v-if="!loading" name="list" tag="div" class="movie-grid">
-        <MovieCard v-for="movie in movies" :key="movie.id" :movie="movie" />
-      </transition-group>
-      <div class="movie-grid" v-else>
-        <el-card v-for="i in 20" :key="i" class="skeleton-card" shadow="never">
-          <el-skeleton animated>
-            <template #template>
-              <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px" />
-              <el-skeleton-item variant="h3" style="width: 80%; margin-top: 12px" />
-              <el-skeleton-item variant="text" style="width: 50%; margin-top: 8px" />
-            </template>
-          </el-skeleton>
-        </el-card>
+      <div class="movie-grid-wrapper" v-loading="loading">
+        <transition-group v-if="movies.length > 0" name="list" tag="div" class="movie-grid">
+          <MovieCard v-for="movie in movies" :key="movie.id" :movie="movie" />
+        </transition-group>
+        <div class="movie-grid" v-else-if="loading">
+          <el-card v-for="i in 20" :key="i" class="skeleton-card" shadow="never">
+            <el-skeleton animated>
+              <template #template>
+                <el-skeleton-item variant="image" style="width: 100%; height: 200px; border-radius: 8px" />
+                <el-skeleton-item variant="h3" style="width: 80%; margin-top: 12px" />
+                <el-skeleton-item variant="text" style="width: 50%; margin-top: 8px" />
+              </template>
+            </el-skeleton>
+          </el-card>
+        </div>
       </div>
 
       <!-- 空状态 -->
@@ -196,9 +198,26 @@ onMounted(() => {
   gap: 10px;
 }
 
+.genre-filter :deep(.el-check-tag) {
+  transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.genre-filter :deep(.el-check-tag:hover) {
+  transform: translateY(-1px);
+}
+
+.genre-filter :deep(.el-check-tag.is-checked) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
 .genre-filter .el-check-tag {
   border-radius: 20px;
   padding: 6px 16px;
+}
+
+.movie-grid-wrapper {
+  min-height: 240px;
 }
 
 .movie-grid {

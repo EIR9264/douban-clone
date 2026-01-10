@@ -1,8 +1,9 @@
 <script setup>
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import api from '@/api'
 
 const router = useRouter()
 const route = useRoute()
@@ -13,8 +14,13 @@ const loading = ref(false)
 
 const form = reactive({
   username: '',
-  password: ''
+  password: '',
+  captchaId: '',
+  captchaCode: ''
 })
+
+const captchaImage = ref('')
+const captchaLoading = ref(false)
 
 const rules = {
   username: [
@@ -22,7 +28,23 @@ const rules = {
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' }
+  ],
+  captchaCode: [
+    { required: true, message: '请输入验证码', trigger: 'blur' }
   ]
+}
+
+async function refreshCaptcha() {
+  captchaLoading.value = true
+  try {
+    const res = await api.getCaptcha()
+    form.captchaId = res.captchaId
+    captchaImage.value = res.image
+  } catch {
+    captchaImage.value = ''
+  } finally {
+    captchaLoading.value = false
+  }
 }
 
 async function handleLogin() {
@@ -33,7 +55,7 @@ async function handleLogin() {
 
     loading.value = true
     try {
-      await userStore.login(form.username, form.password)
+      await userStore.login(form.username, form.password, form.captchaId, form.captchaCode)
       ElMessage.success('登录成功')
       const redirect = route.query.redirect
       if (redirect) {
@@ -45,11 +67,17 @@ async function handleLogin() {
       }
     } catch (e) {
       ElMessage.error(e.message)
+      await refreshCaptcha()
+      form.captchaCode = ''
     } finally {
       loading.value = false
     }
   })
 }
+
+onMounted(() => {
+  refreshCaptcha()
+})
 </script>
 
 <template>
@@ -88,13 +116,29 @@ async function handleLogin() {
           />
         </el-form-item>
 
+        <el-form-item label="验证码" prop="captchaCode">
+          <div class="captcha-row">
+            <el-input
+              v-model="form.captchaCode"
+              placeholder="请输入验证码"
+              size="large"
+              autocomplete="off"
+            />
+            <div class="captcha-img" @click="refreshCaptcha" title="点击刷新验证码">
+              <img v-if="captchaImage" :src="captchaImage" alt="captcha" />
+              <div v-else class="captcha-fallback">刷新</div>
+              <div v-if="captchaLoading" class="captcha-mask">...</div>
+            </div>
+          </div>
+        </el-form-item>
+
         <el-form-item>
           <el-button
             type="primary"
             size="large"
             :loading="loading"
-            @click="handleLogin"
             class="submit-btn"
+            native-type="submit"
           >
             {{ loading ? '登录中...' : '登录' }}
           </el-button>
@@ -170,6 +214,53 @@ export default {
 
 .submit-btn {
   width: 100%;
+}
+
+.captcha-row {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 12px;
+  width: 100%;
+  align-items: center;
+}
+
+.captcha-img {
+  position: relative;
+  height: 44px;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--separator);
+  background: rgba(60, 60, 67, 0.06);
+  cursor: pointer;
+  user-select: none;
+}
+
+.captcha-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.captcha-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.captcha-mask {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-weight: 600;
 }
 
 .divider-text {

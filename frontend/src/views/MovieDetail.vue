@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, reactive } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import api from '@/api'
@@ -13,6 +13,7 @@ const userStore = useUserStore()
 
 const movie = ref(null)
 const reviews = ref([])
+const likingIds = reactive(new Set())
 const userRating = ref(0)
 const userCollection = ref(null)
 const loading = ref(true)
@@ -30,6 +31,34 @@ const posterUrl = computed(() => {
   return normalizePosterUrl(movie.value.poster)
 })
 
+function parseMovieMedia(raw) {
+  if (!raw) return { trailer: null, stills: [] }
+  const str = String(raw).trim()
+  if (!str) return { trailer: null, stills: [] }
+  try {
+    const parsed = JSON.parse(str)
+    if (Array.isArray(parsed)) {
+      return { trailer: null, stills: parsed.map(normalizeMediaItem).filter(Boolean) }
+    }
+    const trailer = normalizeMediaItem(parsed?.trailer)
+    const stills = Array.isArray(parsed?.stills) ? parsed.stills.map(normalizeMediaItem).filter(Boolean) : []
+    return { trailer, stills }
+  } catch {
+    return { trailer: null, stills: str.split(',').map(s => s.trim()).filter(Boolean).map((url) => ({ url })) }
+  }
+}
+
+function normalizeMediaItem(item) {
+  if (!item) return null
+  if (typeof item === 'string') return item.trim() ? { url: item.trim() } : null
+  if (typeof item === 'object' && item.url) return { url: String(item.url).trim() }
+  return null
+}
+
+const media = computed(() => parseMovieMedia(movie.value?.images))
+const trailerUrl = computed(() => media.value.trailer?.url || '')
+const stillUrls = computed(() => media.value.stills.map(s => s.url).filter(Boolean))
+
 async function fetchMovie() {
   loading.value = true
   try {
@@ -45,9 +74,27 @@ async function fetchMovie() {
       userCollection.value = status.collection
     }
   } catch (e) {
-    ElMessage.error('加载电影详情失败')
+    ElMessage.error(e.message || '加载电影详情失败')
   } finally {
     loading.value = false
+  }
+}
+
+async function toggleReviewLike(review) {
+  if (!isLoggedIn.value) return
+  if (!review?.id) return
+
+  if (likingIds.has(review.id)) return
+  likingIds.add(review.id)
+  try {
+    const res = await api.likeReview(review.id)
+    review.liked = !!res.liked
+    if (res.likeCount !== undefined) review.likeCount = res.likeCount
+    else if (res.likes !== undefined) review.likeCount = res.likes
+  } catch (e) {
+    ElMessage.error(e.message || '操作失败')
+  } finally {
+    likingIds.delete(review.id)
   }
 }
 
@@ -99,7 +146,9 @@ async function submitReview() {
       title: reviewTitle.value,
       content: reviewContent.value
     })
-    newReview.userRating = userRating.value
+    newReview.userRating = userRating.value ? userRating.value : null
+    newReview.liked = false
+    newReview.likeCount = newReview.likeCount ?? 0
     newReview.username = userStore.user?.username
     newReview.avatar = userStore.user?.avatar
     reviews.value.unshift(newReview)
@@ -256,6 +305,40 @@ onMounted(() => {
         <p class="summary">{{ movie.summary || '暂无简介' }}</p>
       </el-card>
 
+      <!-- Media section -->
+      <el-card class="summary-section" shadow="never" v-if="movie">
+        <template #header>
+          <span class="section-title">预告片与剧照</span>
+        </template>
+
+        <el-empty
+          v-if="!trailerUrl && stillUrls.length === 0"
+          description="暂无预告片/剧照"
+          :image-size="80"
+        />
+
+        <div class="media-section" v-if="trailerUrl">
+          <div class="media-title">预告片</div>
+          <video v-if="/\\.(mp4|webm|ogg)(\\?.*)?$/i.test(trailerUrl)" class="trailer" controls :src="trailerUrl" />
+          <el-link v-else :href="trailerUrl" target="_blank" type="primary">打开预告片链接</el-link>
+        </div>
+
+        <div class="media-section" v-if="stillUrls.length > 0">
+          <div class="media-title">剧照</div>
+          <div class="still-grid">
+            <el-image
+              v-for="url in stillUrls"
+              :key="url"
+              :src="url"
+              fit="cover"
+              class="still"
+              :preview-src-list="stillUrls"
+              preview-teleported
+            />
+          </div>
+        </div>
+      </el-card>
+
       <!-- Reviews section -->
       <el-card class="reviews-section" shadow="never" v-if="movie">
         <template #header>
@@ -277,7 +360,7 @@ onMounted(() => {
               </el-avatar>
               <div class="review-meta">
                 <span class="review-author">{{ review.username }}</span>
-                <RatingStars :score="review.userRating || 0" size="small" readonly />
+                <RatingStars v-if="review.userRating" :score="review.userRating" size="small" readonly />
               </div>
               <el-button
                 v-if="isLoggedIn && review.userId === userStore.user?.id"
@@ -295,10 +378,21 @@ onMounted(() => {
                 <el-icon><Clock /></el-icon>
                 {{ new Date(review.createdAt).toLocaleDateString() }}
               </span>
-              <span class="review-likes">
-                <el-icon><Pointer /></el-icon>
-                {{ review.likes || 0 }} 有用
-              </span>
+              <el-tooltip content="登录后才可点赞" placement="top" :disabled="isLoggedIn">
+                <span class="review-like-wrap">
+                  <el-button
+                    class="review-like-btn"
+                    link
+                    :type="review.liked ? 'primary' : undefined"
+                    :loading="likingIds.has(review.id)"
+                    :disabled="!isLoggedIn"
+                    @click="toggleReviewLike(review)"
+                  >
+                    <el-icon><Pointer /></el-icon>
+                    {{ review.likeCount || 0 }} 有用
+                  </el-button>
+                </span>
+              </el-tooltip>
             </div>
           </div>
 
@@ -500,6 +594,37 @@ export default {
   color: var(--text-secondary);
 }
 
+.media-section + .media-section {
+  margin-top: 18px;
+}
+
+.media-title {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.trailer {
+  width: 100%;
+  max-height: 420px;
+  border-radius: 12px;
+  background: #000;
+}
+
+.still-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+
+.still {
+  width: 100%;
+  height: 100px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--separator);
+}
+
 .reviews-list {
   display: flex;
   flex-direction: column;
@@ -553,6 +678,20 @@ export default {
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.review-like-btn {
+  padding: 0;
+  height: auto;
+  font-size: 12px;
+}
+
+.review-like-wrap {
+  display: inline-flex;
+}
+
+.review-like-btn :deep(.el-icon) {
+  margin-right: 4px;
 }
 
 @media (max-width: 768px) {

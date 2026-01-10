@@ -137,8 +137,10 @@ public class MovieController {
     public ResponseEntity<PageResult<Review>> getReviews(
             @PathVariable Long id,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(interactionService.getMovieReviews(id, page, size));
+            @RequestParam(defaultValue = "10") int size,
+            HttpServletRequest httpRequest) {
+        Long viewerId = (Long) httpRequest.getAttribute("userId");
+        return ResponseEntity.ok(interactionService.getMovieReviews(id, viewerId, page, size));
     }
 
     @PostMapping("/{id}/reviews")
@@ -155,9 +157,21 @@ public class MovieController {
     }
 
     @PostMapping("/reviews/{reviewId}/like")
-    public ResponseEntity<?> likeReview(@PathVariable Long reviewId) {
-        interactionService.likeReview(reviewId);
-        return ResponseEntity.ok(Map.of("success", true));
+    public ResponseEntity<?> likeReview(@PathVariable Long reviewId, HttpServletRequest httpRequest) {
+        Long userId = (Long) httpRequest.getAttribute("userId");
+        if (userId == null) {
+            return ResponseEntity.status(401).body(Map.of("error", "请先登录"));
+        }
+        try {
+            Review updated = interactionService.toggleReviewLike(userId, reviewId);
+            return ResponseEntity.ok(Map.of(
+                    "liked", Boolean.TRUE.equals(updated.getLiked()),
+                    "likeCount", updated.getLikeCount() == null ? 0 : updated.getLikeCount(),
+                    "likes", updated.getLikeCount() == null ? 0 : updated.getLikeCount()
+            ));
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+        }
     }
 
     @DeleteMapping("/reviews/{reviewId}")
